@@ -1,0 +1,20 @@
+{
+  "branches": [
+    {
+      "id": "branch_hazaribagh_main",
+      "name": "Al-Malaika Life Style Salon - Pugmil",
+      "tagline": "Main Flagship Studio",
+      "address": "Alfalah Colony, Pugmil, Hazaribagh, Jharkhand 825319",
+      "phone": "09708101242",
+      "whatsapp": "919708101242",
+      "latitude": 23.9937,
+      "longitude": 85.3648,
+      "googleMapsUrl": "https://maps.google.com/?q=Alfalah+Colony+Pugmil+Hazaribagh+Jharkhand+825319",
+      "openingTime": "09:00 AM",
+      "closingTime": "09:00 PM",
+      "timings": "Monday - Sunday: 9:00 AM - 9:00 PM (Open all 7 days)",
+      "enabled": true,
+      "isPrimary": true
+    }
+  ]
+}

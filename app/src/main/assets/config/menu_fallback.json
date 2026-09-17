@@ -1,0 +1,116 @@
+{
+  "schemaVersion": 1,
+  "configVersion": 1,
+  "salon": {
+    "name": "Al-Malaika Life Style Salon",
+    "tagline": "Style • Beauty • Care",
+    "logoUrl": "https://images.unsplash.com/photo-1560066984-138dadb4c035?auto=format&fit=crop&w=300&q=80",
+    "phone": "09708101242",
+    "whatsapp": "919708101242",
+    "address": "Alfalah Colony, Pugmil, Hazaribagh, Jharkhand 825319"
+  },
+  "bottomNavigation": [
+    {
+      "id": "home",
+      "title": "Home",
+      "icon": "home",
+      "route": "home",
+      "enabled": true,
+      "order": 1
+    },
+    {
+      "id": "services",
+      "title": "Services",
+      "icon": "content_cut",
+      "route": "services",
+      "enabled": true,
+      "order": 2
+    },
+    {
+      "id": "offers",
+      "title": "Offers",
+      "icon": "local_offer",
+      "route": "offers",
+      "enabled": true,
+      "order": 3
+    },
+    {
+      "id": "booking",
+      "title": "Booking",
+      "icon": "calendar_month",
+      "route": "booking",
+      "enabled": true,
+      "order": 4
+    },
+    {
+      "id": "locations",
+      "title": "Locations",
+      "icon": "place",
+      "route": "locations",
+      "enabled": true,
+      "order": 5
+    }
+  ],
+  "drawer": [
+    { "id": "home", "title": "Home", "icon": "home", "route": "home", "enabled": true },
+    { "id": "services", "title": "Services", "icon": "content_cut", "route": "services", "enabled": true },
+    { "id": "offers", "title": "Offers", "icon": "local_offer", "route": "offers", "enabled": true },
+    { "id": "booking", "title": "Book Appointment", "icon": "calendar_month", "route": "booking", "enabled": true },
+    { "id": "home_service", "title": "Home Service", "icon": "home_repair_service", "route": "home_service", "enabled": true },
+    { "id": "gallery", "title": "Gallery", "icon": "photo_library", "route": "gallery", "enabled": true },
+    { "id": "locations", "title": "Our Locations", "icon": "place", "route": "locations", "enabled": true },
+    { "id": "about", "title": "About Us", "icon": "info", "route": "about", "enabled": true },
+    { "id": "contact", "title": "Contact Us", "icon": "call", "route": "contact", "enabled": true },
+    { "id": "settings", "title": "Settings", "icon": "settings", "route": "settings", "enabled": true },
+    { "id": "share", "title": "Share App", "icon": "share", "route": "action:share", "enabled": true },
+    { "id": "rate", "title": "Rate Us", "icon": "star", "route": "action:rate", "enabled": true },
+    { "id": "terms", "title": "Terms & Conditions", "icon": "description", "route": "terms", "enabled": true },
+    { "id": "privacy", "title": "Privacy Policy", "icon": "privacy_tip", "route": "privacy", "enabled": true }
+  ],
+  "featureFlags": {
+    "booking": true,
+    "homeService": true,
+    "offers": true,
+    "gallery": true,
+    "multipleBranches": true,
+    "whatsappBooking": true,
+    "pushNotifications": false,
+    "reviews": true,
+    "socialMedia": true
+  },
+  "whatsapp": {
+    "enabled": true,
+    "number": "919708101242",
+    "appointmentMessage": "Hello {salonName}, I would like to book an appointment.\n\nName: {name}\nPhone: {phone}\nBranch: {branch}\nService: {service}\nDate: {date}\nTime: {time}\nMessage: {message}\n\nPlease confirm my appointment.",
+    "homeServiceMessage": "Hello {salonName}, I would like to book a Home Service.\n\nName: {name}\nPhone: {phone}\nAddress: {address}\nService: {service}\nDate: {date}\nTime: {time}\nMessage: {message}\n\nPlease confirm my booking."
+  },
+  "contact": {
+    "phone": "09708101242",
+    "whatsapp": "919708101242",
+    "email": "contact@almalaikasalon.com",
+    "website": "https://almalaikasalon.com",
+    "instagram": "https://instagram.com/almalaikasalon",
+    "facebook": "https://facebook.com/almalaikasalon",
+    "youtube": "https://youtube.com/@almalaikasalon",
+    "googleMaps": "https://maps.google.com/?q=Alfalah+Colony+Pugmil+Hazaribagh+Jharkhand+825319"
+  },
+  "share": {
+    "enabled": true,
+    "message": "Discover Al-Malaika Life Style Salon - Alfalah Colony, Pugmil, Hazaribagh.",
+    "playStoreUrl": "https://play.google.com/store/apps/details?id=com.almalika.salon"
+  },
+  "legal": {
+    "termsUrl": "https://almalaikasalon.com/terms",
+    "privacyUrl": "https://almalaikasalon.com/privacy"
+  },
+  "screens": {
+    "home": { "enabled": true, "configUrl": "/v1/salon/home" },
+    "services": { "enabled": true, "configUrl": "/v1/salon/services" },
+    "offers": { "enabled": true, "configUrl": "/v1/salon/offers" },
+    "gallery": { "enabled": true, "configUrl": "/v1/salon/gallery" },
+    "locations": { "enabled": true, "configUrl": "/v1/salon/locations" },
+    "booking": { "enabled": true, "configUrl": "/v1/salon/booking" },
+    "homeService": { "enabled": true, "configUrl": "/v1/salon/home-service" },
+    "about": { "enabled": true, "configUrl": "/v1/salon/about" }
+  }
+}
