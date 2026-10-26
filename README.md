@@ -32,15 +32,8 @@ The application is engineered as a **reusable salon framework**. No salon-specif
 ```text
 app/
 ├── src/main/
-│   ├── assets/config/             <-- Bundled fallback JSONs for first-run offline resilience
-│   │   ├── menu_fallback.json
-│   │   ├── home_fallback.json
-│   │   ├── services_fallback.json
-│   │   ├── offers_fallback.json
-│   │   ├── gallery_fallback.json
-│   │   ├── locations_fallback.json
-│   │   ├── booking_fallback.json
-│   │   └── home_service_fallback.json
+│   ├── assets/config/             <-- Bundled fallback JSON for first-run offline resilience
+│   │   └── menu_fallback.json
 │   └── java/com/almalika/salon/
 │       ├── core/                  <-- UiState, AppAction, ActionExecutor
 │       ├── data/

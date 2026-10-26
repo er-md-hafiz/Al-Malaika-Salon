@@ -41,9 +41,14 @@ import com.almalika.salon.presentation.locations.LocationsViewModel
 import com.almalika.salon.presentation.navigation.IconResolver
 import com.almalika.salon.presentation.offers.OffersScreen
 import com.almalika.salon.presentation.offers.OffersViewModel
+import com.almalika.salon.presentation.reviews.ReviewsScreen
+import com.almalika.salon.presentation.reviews.ReviewsViewModel
 import com.almalika.salon.presentation.services.ServicesScreen
 import com.almalika.salon.presentation.services.ServicesViewModel
 import com.almalika.salon.presentation.settings.SettingsScreen
+import com.almalika.salon.presentation.login.LoginScreen
+import com.almalika.salon.presentation.onboarding.OnboardingScreen
+import com.almalika.salon.presentation.splash.SplashScreen
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -55,6 +60,7 @@ fun MainAppShell(
 ) {
     val context = LocalContext.current
     val shellState by viewModel.uiState.collectAsState()
+    val isOnboardingCompleted by viewModel.isOnboardingCompleted.collectAsState()
     val navController = rememberNavController()
     val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
     val coroutineScope = rememberCoroutineScope()
@@ -82,9 +88,23 @@ fun MainAppShell(
 
             val activeDrawer = master.drawer
                 .filter { it.enabled }
+                .sortedBy { it.order }
 
             val navBackStackEntry by navController.currentBackStackEntryAsState()
-            val currentRoute = navBackStackEntry?.destination?.route ?: "home"
+            val currentRoute = navBackStackEntry?.destination?.route ?: "splash"
+            val isRootFlowScreen = currentRoute in listOf("splash", "onboarding", "login")
+
+            val startDestination = remember {
+                if (master.splashScreen.enabled) {
+                    "splash"
+                } else if (master.onboarding.enabled && !isOnboardingCompleted) {
+                    "onboarding"
+                } else if (master.startup.requireLogin || master.login.enabled) {
+                    "login"
+                } else {
+                    "home"
+                }
+            }
 
             // Log screen view to Firebase Analytics and Crashlytics whenever route changes
             LaunchedEffect(currentRoute) {
@@ -93,7 +113,7 @@ fun MainAppShell(
 
             // Handle FCM notification deep link navigation
             LaunchedEffect(initialRoute) {
-                if (!initialRoute.isNullOrBlank() && initialRoute != "home") {
+                if (!initialRoute.isNullOrBlank() && initialRoute != "home" && !isRootFlowScreen) {
                     try {
                         navController.navigate(initialRoute) {
                             launchSingleTop = true
@@ -112,6 +132,7 @@ fun MainAppShell(
                     is AppAction.Home -> navController.navigate("home") { launchSingleTop = true }
                     is AppAction.Services -> navController.navigate("services") { launchSingleTop = true }
                     is AppAction.Offers -> navController.navigate("offers") { launchSingleTop = true }
+                    is AppAction.Reviews -> navController.navigate("reviews") { launchSingleTop = true }
                     is AppAction.Booking -> navController.navigate("booking") { launchSingleTop = true }
                     is AppAction.HomeService -> navController.navigate("home_service") { launchSingleTop = true }
                     is AppAction.Gallery -> navController.navigate("gallery") { launchSingleTop = true }
@@ -127,6 +148,7 @@ fun MainAppShell(
 
             ModalNavigationDrawer(
                 drawerState = drawerState,
+                gesturesEnabled = !isRootFlowScreen && master.navigation.drawerEnabled,
                 drawerContent = {
                     ModalDrawerSheet(modifier = Modifier.width(300.dp)) {
                         Text(
@@ -166,22 +188,26 @@ fun MainAppShell(
             ) {
                 Scaffold(
                     topBar = {
-                        TopAppBar(
-                            title = {
-                                Text(
-                                    text = getScreenTitle(currentRoute, master),
-                                    style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold)
-                                )
-                            },
-                            navigationIcon = {
-                                IconButton(onClick = { coroutineScope.launch { drawerState.open() } }) {
-                                    Icon(imageVector = Icons.Default.Menu, contentDescription = "Navigation Menu")
+                        if (!isRootFlowScreen) {
+                            TopAppBar(
+                                title = {
+                                    Text(
+                                        text = getScreenTitle(currentRoute, master),
+                                        style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold)
+                                    )
+                                },
+                                navigationIcon = {
+                                    if (master.navigation.drawerEnabled) {
+                                        IconButton(onClick = { coroutineScope.launch { drawerState.open() } }) {
+                                            Icon(imageVector = Icons.Default.Menu, contentDescription = "Navigation Menu")
+                                        }
+                                    }
                                 }
-                            }
-                        )
+                            )
+                        }
                     },
                     bottomBar = {
-                        if (activeBottomNav.isNotEmpty()) {
+                        if (!isRootFlowScreen && master.navigation.bottomNavigationEnabled && activeBottomNav.isNotEmpty()) {
                             NavigationBar {
                                 activeBottomNav.forEach { navItem ->
                                     val isSelected = currentRoute == navItem.route
@@ -211,9 +237,51 @@ fun MainAppShell(
                 ) { innerPadding ->
                     NavHost(
                         navController = navController,
-                        startDestination = "home",
+                        startDestination = startDestination,
                         modifier = Modifier.padding(innerPadding)
                     ) {
+                        composable("splash") {
+                            SplashScreen(
+                                config = master.splashScreen,
+                                onFinish = {
+                                    val nextRoute = when {
+                                        master.onboarding.enabled && !isOnboardingCompleted -> "onboarding"
+                                        master.startup.requireLogin || master.login.enabled -> "login"
+                                        else -> "home"
+                                    }
+                                    navController.navigate(nextRoute) {
+                                        popUpTo("splash") { inclusive = true }
+                                    }
+                                }
+                            )
+                        }
+
+                        composable("onboarding") {
+                            OnboardingScreen(
+                                config = master.onboarding,
+                                onComplete = {
+                                    viewModel.completeOnboarding()
+                                    val nextRoute = if (master.startup.requireLogin || master.login.enabled) "login" else "home"
+                                    navController.navigate(nextRoute) {
+                                        popUpTo("onboarding") { inclusive = true }
+                                    }
+                                }
+                            )
+                        }
+
+                        composable("login") {
+                            LoginScreen(
+                                config = master.login,
+                                onGuestLogin = {
+                                    navController.navigate("home") {
+                                        popUpTo("login") { inclusive = true }
+                                    }
+                                },
+                                onOpenTerms = { handleAction(AppAction.Terms) },
+                                onOpenPrivacy = { handleAction(AppAction.Privacy) }
+                            )
+                        }
+
                         composable("home") {
                             val homeVm: HomeViewModel = hiltViewModel()
                             HomeScreen(
@@ -235,6 +303,11 @@ fun MainAppShell(
                         composable("offers") {
                             val offersVm: OffersViewModel = hiltViewModel()
                             OffersScreen(viewModel = offersVm, onAction = handleAction)
+                        }
+
+                        composable("reviews") {
+                            val reviewsVm: ReviewsViewModel = hiltViewModel()
+                            ReviewsScreen(viewModel = reviewsVm, master = master, onAction = handleAction)
                         }
 
                         composable("gallery") {
@@ -266,7 +339,14 @@ fun MainAppShell(
                         }
 
                         composable("settings") {
-                            SettingsScreen(master = master, onAction = handleAction)
+                            val userDarkMode by viewModel.isDarkMode.collectAsState()
+                            val currentIsDark = userDarkMode ?: (master.theme.themeMode.lowercase() != "light")
+                            SettingsScreen(
+                                master = master,
+                                onAction = handleAction,
+                                isDarkMode = currentIsDark,
+                                onToggleDarkMode = { viewModel.setDarkMode(it) }
+                            )
                         }
 
                         composable("terms") {
@@ -288,6 +368,7 @@ fun getScreenTitle(route: String, master: SalonMasterConfig): String {
         "home" -> master.salon.name.ifBlank { "Al-Malaika Salon" }
         "services" -> "Our Services"
         "offers" -> "Exclusive Offers"
+        "reviews" -> "Client Reviews"
         "gallery" -> "Salon Gallery"
         "locations" -> "Our Branches"
         "booking" -> "Book Appointment"

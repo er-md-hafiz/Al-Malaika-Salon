@@ -44,14 +44,28 @@ fun ContactScreen(
             Spacer(modifier = Modifier.height(8.dp))
         }
 
-        if (contact.phone.isNotBlank()) {
+        val supportPhone = master.profile?.supportPhone.orEmpty().ifBlank { contact.phone }
+        if (supportPhone.isNotBlank()) {
             item {
                 ContactActionTile(
                     title = "Phone Call",
-                    subtitle = contact.phone,
+                    subtitle = supportPhone,
                     icon = Icons.Default.Call,
                     tint = MaterialTheme.colorScheme.primary,
-                    onClick = { onAction(AppAction.Call(contact.phone)) }
+                    onClick = { onAction(AppAction.Call(supportPhone)) }
+                )
+            }
+        }
+
+        val supportEmail = master.profile?.supportEmail.orEmpty().ifBlank { contact.email }
+        if (supportEmail.isNotBlank()) {
+            item {
+                ContactActionTile(
+                    title = "Support Email",
+                    subtitle = supportEmail,
+                    icon = Icons.Default.Email,
+                    tint = MaterialTheme.colorScheme.secondary,
+                    onClick = { onAction(AppAction.OpenUrl("mailto:$supportEmail", "Support Email")) }
                 )
             }
         }

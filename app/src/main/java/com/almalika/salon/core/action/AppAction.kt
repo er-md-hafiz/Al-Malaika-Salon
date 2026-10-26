@@ -4,6 +4,7 @@ sealed interface AppAction {
     data object Home : AppAction
     data object Services : AppAction
     data object Offers : AppAction
+    data object Reviews : AppAction
     data object Booking : AppAction
     data object HomeService : AppAction
     data object Gallery : AppAction

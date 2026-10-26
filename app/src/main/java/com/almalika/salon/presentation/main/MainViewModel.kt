@@ -27,9 +27,28 @@ class MainViewModel @Inject constructor(
     private val getGalleryUseCase: GetGalleryUseCase,
     private val getLocationsUseCase: GetLocationsUseCase,
     private val refreshConfigUseCase: RefreshConfigUseCase,
+    private val userPreferencesRepository: com.almalika.salon.data.local.preferences.UserPreferencesRepository,
     val analyticsHelper: com.almalika.salon.core.analytics.AnalyticsHelper,
     val crashlyticsHelper: com.almalika.salon.core.crashlytics.CrashlyticsHelper
 ) : ViewModel() {
+
+    val isOnboardingCompleted: StateFlow<Boolean> = userPreferencesRepository.isOnboardingCompleted
+        .stateIn(viewModelScope, SharingStarted.Eagerly, false)
+
+    fun completeOnboarding() {
+        viewModelScope.launch {
+            userPreferencesRepository.setOnboardingCompleted(true)
+        }
+    }
+
+    val isDarkMode: StateFlow<Boolean?> = userPreferencesRepository.isDarkMode
+        .stateIn(viewModelScope, SharingStarted.Eagerly, null)
+
+    fun setDarkMode(enabled: Boolean) {
+        viewModelScope.launch {
+            userPreferencesRepository.setDarkMode(enabled)
+        }
+    }
 
     private val _uiState = MutableStateFlow<UiState<AppShellData>>(UiState.Loading)
     val uiState: StateFlow<UiState<AppShellData>> = _uiState.asStateFlow()

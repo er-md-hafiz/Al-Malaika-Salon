@@ -21,6 +21,8 @@ import com.almalika.salon.domain.model.SalonMasterConfig
 fun SettingsScreen(
     master: SalonMasterConfig,
     onAction: (AppAction) -> Unit,
+    isDarkMode: Boolean = true,
+    onToggleDarkMode: (Boolean) -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     LazyColumn(
@@ -37,12 +39,65 @@ fun SettingsScreen(
         }
 
         item {
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(14.dp)
+            ) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(16.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.DarkMode,
+                        contentDescription = "Dark Mode",
+                        tint = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.size(24.dp)
+                    )
+                    Spacer(modifier = Modifier.width(16.dp))
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(text = "Dark Mode", style = MaterialTheme.typography.titleMedium)
+                        Text(
+                            text = "Royal Al-Malaika dark aesthetic",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                    Switch(
+                        checked = isDarkMode,
+                        onCheckedChange = onToggleDarkMode
+                    )
+                }
+            }
+        }
+
+        item {
+            SettingsRow(
+                title = "Client Reviews",
+                subtitle = "Read verified styling feedback & testimonials",
+                icon = Icons.Default.RateReview,
+                onClick = { onAction(AppAction.Reviews) }
+            )
+        }
+
+        item {
+            SettingsRow(
+                title = "About Us",
+                subtitle = "Learn more about our legacy & salon styling",
+                icon = Icons.Default.Info,
+                onClick = { onAction(AppAction.About) }
+            )
+        }
+
+        item {
+            val shareMsg = master.profile?.shareMessage?.ifBlank { master.share.message } ?: master.share.message
             SettingsRow(
                 title = "Share Application",
                 subtitle = "Recommend Al-Malaika Salon to family & friends",
                 icon = Icons.Default.Share,
                 onClick = {
-                    onAction(AppAction.ShareApp(master.share.message, master.share.playStoreUrl))
+                    onAction(AppAction.ShareApp(shareMsg, master.share.playStoreUrl))
                 }
             )
         }
@@ -75,6 +130,8 @@ fun SettingsScreen(
         }
 
         item {
+            val appTitle = master.profile?.appName?.ifBlank { master.salon.name } ?: master.salon.name
+            val appVer = master.profile?.appVersion?.ifBlank { "1.0.0" } ?: "1.0.0"
             Card(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -89,11 +146,11 @@ fun SettingsScreen(
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
                     Text(
-                        text = master.salon.name,
+                        text = appTitle,
                         style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.Bold)
                     )
                     Text(
-                        text = "Config Version: ${master.configVersion} • App Version 1.0",
+                        text = "Version $appVer • Config v${master.configVersion}",
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )

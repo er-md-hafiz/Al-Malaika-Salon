@@ -18,6 +18,13 @@ import com.almalika.salon.presentation.theme.AlMalaikaSalonTheme
 import dagger.hilt.android.AndroidEntryPoint
 import javax.inject.Inject
 
+import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.hilt.navigation.compose.hiltViewModel
+import com.almalika.salon.core.result.UiState
+import com.almalika.salon.presentation.main.MainViewModel
+
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
 
@@ -48,8 +55,20 @@ class MainActivity : ComponentActivity() {
         requestNotificationPermission()
 
         setContent {
-            AlMalaikaSalonTheme {
+            val mainViewModel: MainViewModel = hiltViewModel()
+            val uiState by mainViewModel.uiState.collectAsState()
+            val userDarkMode by mainViewModel.isDarkMode.collectAsState()
+            val masterTheme = (uiState as? UiState.Success)?.data?.masterConfig?.theme
+
+            val isDark = userDarkMode ?: when (masterTheme?.themeMode?.lowercase()) {
+                "light" -> false
+                "dark" -> true
+                else -> isSystemInDarkTheme()
+            }
+
+            AlMalaikaSalonTheme(darkTheme = isDark, themeConfig = masterTheme) {
                 MainAppShell(
+                    viewModel = mainViewModel,
                     initialRoute = targetRouteState.value,
                     onRouteHandled = { targetRouteState.value = null }
                 )

@@ -107,7 +107,8 @@ fun HeroBannerSection(
 
 @Composable
 fun QuickActionsSection(
-    onAction: (AppAction) -> Unit
+    onAction: (AppAction) -> Unit,
+    showHomeService: Boolean = true
 ) {
     Row(
         modifier = Modifier
@@ -119,7 +120,9 @@ fun QuickActionsSection(
         QuickActionItem("Haircut", Icons.Default.ContentCut) { onAction(AppAction.Services) }
         QuickActionItem("Offers", Icons.Default.LocalOffer) { onAction(AppAction.Offers) }
         QuickActionItem("Book", Icons.Default.CalendarMonth) { onAction(AppAction.Booking) }
-        QuickActionItem("Home Service", Icons.Default.HomeRepairService) { onAction(AppAction.HomeService) }
+        if (showHomeService) {
+            QuickActionItem("Home Service", Icons.Default.HomeRepairService) { onAction(AppAction.HomeService) }
+        }
         QuickActionItem("Gallery", Icons.Default.PhotoLibrary) { onAction(AppAction.Gallery) }
     }
 }

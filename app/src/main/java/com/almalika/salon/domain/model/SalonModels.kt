@@ -10,7 +10,79 @@ data class SalonMasterConfig(
     val whatsapp: WhatsAppConfig,
     val contact: ContactInfo,
     val share: ShareConfig,
-    val legal: LegalConfig
+    val legal: LegalConfig,
+    val profile: ProfileConfig? = null,
+    val franchise: FranchiseConfig? = null,
+    val startup: StartupConfig = StartupConfig(),
+    val splashScreen: SplashScreenConfig = SplashScreenConfig(),
+    val onboarding: OnboardingConfig = OnboardingConfig(),
+    val login: LoginConfig = LoginConfig(),
+    val navigation: NavigationConfig = NavigationConfig(),
+    val theme: ThemeConfig = ThemeConfig()
+)
+
+data class ThemeConfig(
+    val themeMode: String = "dark",
+    val primaryColor: String = "#D4AF37",
+    val secondaryColor: String = "#A67C1E",
+    val backgroundColor: String = "#18181B",
+    val surfaceColor: String = "#27272A",
+    val textColor: String = "#FFFFFF"
+)
+
+data class StartupConfig(
+    val splashScreenId: String = "splash",
+    val onboardingScreenId: String = "onboarding",
+    val loginScreenId: String = "login",
+    val homeScreenId: String = "home",
+    val requireLogin: Boolean = false
+)
+
+data class SplashScreenConfig(
+    val enabled: Boolean = true,
+    val logoUrl: String = "",
+    val title: String = "",
+    val tagline: String = "",
+    val backgroundColor: String = "#121212",
+    val textColor: String = "#FFFFFF",
+    val accentColor: String = "#D4AF37",
+    val minimumDurationMs: Long = 1500L,
+    val animationType: String = "fade"
+)
+
+data class OnboardingConfig(
+    val enabled: Boolean = true,
+    val showSkip: Boolean = true,
+    val pages: List<OnboardingPage> = emptyList()
+)
+
+data class OnboardingPage(
+    val id: String,
+    val order: Int,
+    val title: String,
+    val description: String,
+    val illustrationUrl: String,
+    val nextLabel: String = "Next",
+    val skipLabel: String = "Skip",
+    val getStartedLabel: String = "Get Started"
+)
+
+data class LoginConfig(
+    val enabled: Boolean = false,
+    val allowGuest: Boolean = true,
+    val title: String = "Welcome",
+    val subtitle: String = "Sign in to your account",
+    val logoUrl: String = "",
+    val phonePlaceholder: String = "Enter mobile number",
+    val continueAsGuestLabel: String = "Continue as Guest",
+    val loginButtonLabel: String = "Sign In"
+)
+
+data class NavigationConfig(
+    val drawerEnabled: Boolean = true,
+    val bottomNavigationEnabled: Boolean = true,
+    val drawerItems: List<NavItem> = emptyList(),
+    val bottomItems: List<NavItem> = emptyList()
 )
 
 data class SalonInfo(
@@ -58,7 +130,42 @@ data class ShareConfig(
 
 data class LegalConfig(
     val termsUrl: String,
-    val privacyUrl: String
+    val privacyUrl: String,
+    val aboutUsUrl: String = ""
+)
+
+data class ProfileConfig(
+    val appName: String,
+    val appVersion: String,
+    val shareMessage: String,
+    val supportEmail: String,
+    val supportPhone: String,
+    val privacyPolicyUrl: String,
+    val termsUrl: String,
+    val aboutUs: String,
+    val darkModeEnabled: Boolean,
+    val notificationEnabled: Boolean,
+    val menuItems: List<ProfileMenuItem> = emptyList()
+)
+
+data class ProfileMenuItem(
+    val id: String,
+    val title: String,
+    val type: String,
+    val enabled: Boolean,
+    val icon: String
+)
+
+data class FranchiseConfig(
+    val enabled: Boolean = false,
+    val title: String = "",
+    val subtitle: String = "",
+    val description: String = "",
+    val contactPerson: String = "",
+    val contactNumber: String = "",
+    val email: String = "",
+    val whatsApp: String = "",
+    val website: String = ""
 )
 
 data class HomeConfig(
@@ -76,6 +183,7 @@ enum class SectionType {
     ABOUT,
     CONTACT,
     BANNER,
+    REVIEWS,
     SPACER,
     UNKNOWN
 }
@@ -206,8 +314,19 @@ data class BookingField(
 )
 
 data class BookingConfig(
-    val title: String,
-    val subtitle: String,
-    val fields: List<BookingField>,
-    val enabled: Boolean
+    val title: String = "",
+    val subtitle: String = "",
+    val fields: List<BookingField> = emptyList(),
+    val enabled: Boolean = true,
+    val bookingMessage: String = ""
 )
+
+data class Review(
+    val id: String,
+    val author: String,
+    val rating: Double,
+    val comment: String,
+    val date: String,
+    val avatarUrl: String = ""
+)
+

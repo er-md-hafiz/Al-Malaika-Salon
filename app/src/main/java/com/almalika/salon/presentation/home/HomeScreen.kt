@@ -7,7 +7,7 @@ import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.LocalOffer
+import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -104,7 +104,8 @@ fun DynamicSectionRenderer(
         }
 
         SectionType.QUICK_ACTIONS -> {
-            QuickActionsSection(onAction = onAction)
+            val isHomeServiceEnabled = master.featureFlags["homeService"] ?: false
+            QuickActionsSection(onAction = onAction, showHomeService = isHomeServiceEnabled)
         }
 
         SectionType.OFFERS -> {
@@ -216,16 +217,109 @@ fun DynamicSectionRenderer(
             Card(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(140.dp)
                     .padding(horizontal = 16.dp, vertical = 8.dp),
-                shape = RoundedCornerShape(16.dp)
-            ) {
-                AsyncImage(
-                    model = section.imageUrl,
-                    contentDescription = section.title,
-                    modifier = Modifier.fillMaxSize(),
-                    contentScale = ContentScale.Crop
+                shape = RoundedCornerShape(16.dp),
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.surfaceVariant
                 )
+            ) {
+                if (section.imageUrl.isNotBlank()) {
+                    AsyncImage(
+                        model = section.imageUrl,
+                        contentDescription = section.title,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(140.dp),
+                        contentScale = ContentScale.Crop
+                    )
+                } else {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(20.dp)
+                    ) {
+                        Text(
+                            text = section.title.ifBlank { "Special Announcement" },
+                            style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
+                            color = MaterialTheme.colorScheme.primary
+                        )
+                        if (section.subtitle.isNotBlank()) {
+                            Spacer(modifier = Modifier.height(6.dp))
+                            Text(
+                                text = section.subtitle,
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                        if (section.actionRoute.isNotBlank()) {
+                            Spacer(modifier = Modifier.height(12.dp))
+                            FilledTonalButton(
+                                onClick = {
+                                    val action = when (section.actionRoute) {
+                                        "services" -> AppAction.Services
+                                        "offers" -> AppAction.Offers
+                                        "reviews" -> AppAction.Reviews
+                                        "gallery" -> AppAction.Gallery
+                                        "locations" -> AppAction.Locations
+                                        "booking" -> AppAction.Booking
+                                        "about" -> AppAction.About
+                                        "contact" -> AppAction.Contact
+                                        else -> AppAction.About
+                                    }
+                                    onAction(action)
+                                }
+                            ) {
+                                Text(section.actionText.ifBlank { "Learn More" })
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        SectionType.REVIEWS -> {
+            SectionHeader(
+                title = section.title.ifBlank { "Client Reviews" },
+                subtitle = section.subtitle.ifBlank { "Real client styling experiences" },
+                actionText = "All Reviews",
+                onActionClick = { onAction(AppAction.Reviews) }
+            )
+            Card(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp, vertical = 6.dp)
+                    .clickable { onAction(AppAction.Reviews) },
+                shape = RoundedCornerShape(16.dp),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
+            ) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(16.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Star,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.size(32.dp)
+                    )
+                    Spacer(modifier = Modifier.width(12.dp))
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            text = master.salon.name,
+                            style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold)
+                        )
+                        Text(
+                            text = "Royal Grooming & Client Satisfaction",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                    TextButton(onClick = { onAction(AppAction.Reviews) }) {
+                        Text("View")
+                    }
+                }
             }
         }
 

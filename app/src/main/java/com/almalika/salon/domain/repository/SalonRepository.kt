@@ -8,6 +8,7 @@ interface SalonRepository {
     fun getHomeConfig(): Flow<HomeConfig>
     fun getServices(): Flow<List<ServiceCategory>>
     fun getOffers(): Flow<List<Offer>>
+    fun getReviews(): Flow<List<Review>>
     fun getGalleryImages(): Flow<List<GalleryImage>>
     fun getBranches(): Flow<List<Branch>>
     fun getBookingConfig(): Flow<BookingConfig>

@@ -105,24 +105,48 @@ fun AboutScreen(
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
-                    Spacer(modifier = Modifier.height(14.dp))
-                    Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                        Button(
-                            onClick = { onAction(AppAction.Call(master.salon.phone)) },
-                            shape = RoundedCornerShape(20.dp)
-                        ) {
-                            Icon(imageVector = Icons.Default.Call, contentDescription = null, modifier = Modifier.size(16.dp))
-                            Spacer(modifier = Modifier.width(6.dp))
-                            Text("Call Now")
-                        }
-                        Button(
-                            onClick = { onAction(AppAction.WhatsApp(master.salon.whatsapp)) },
-                            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF25D366)),
-                            shape = RoundedCornerShape(20.dp)
-                        ) {
-                            Text("WhatsApp", color = Color.White)
+                    if (master.salon.phone.isNotBlank() || master.salon.whatsapp.isNotBlank()) {
+                        Spacer(modifier = Modifier.height(14.dp))
+                        Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                            if (master.salon.phone.isNotBlank()) {
+                                Button(
+                                    onClick = { onAction(AppAction.Call(master.salon.phone)) },
+                                    shape = RoundedCornerShape(20.dp)
+                                ) {
+                                    Icon(imageVector = Icons.Default.Call, contentDescription = null, modifier = Modifier.size(16.dp))
+                                    Spacer(modifier = Modifier.width(6.dp))
+                                    Text("Call Now")
+                                }
+                            }
+                            if (master.salon.whatsapp.isNotBlank()) {
+                                Button(
+                                    onClick = { onAction(AppAction.WhatsApp(master.salon.whatsapp)) },
+                                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF25D366)),
+                                    shape = RoundedCornerShape(20.dp)
+                                ) {
+                                    Text("WhatsApp", color = Color.White)
+                                }
+                            }
                         }
                     }
+                }
+            }
+        }
+
+        if (master.legal.aboutUsUrl.isNotBlank()) {
+            item {
+                OutlinedButton(
+                    onClick = { onAction(AppAction.OpenUrl(master.legal.aboutUsUrl, "About Us")) },
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(16.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.OpenInBrowser,
+                        contentDescription = null,
+                        modifier = Modifier.size(18.dp)
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text("Read Full Story on Website")
                 }
             }
         }

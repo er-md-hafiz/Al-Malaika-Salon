@@ -4,100 +4,160 @@ import com.squareup.moshi.Json
 import com.squareup.moshi.JsonClass
 
 @JsonClass(generateAdapter = true)
-data class ApiResponse<T>(
-    @Json(name = "success") val success: Boolean,
-    @Json(name = "message") val message: String? = null,
-    @Json(name = "data") val data: T? = null,
-    @Json(name = "errorCode") val errorCode: String? = null,
-    @Json(name = "timestamp") val timestamp: String? = null,
-    @Json(name = "version") val version: String? = null
+data class MenuResponseDto(
+    @Json(name = "metadata") val metadata: MetadataDto? = null,
+    @Json(name = "salon") val salon: SalonDetailDto? = null,
+    @Json(name = "banners") val banners: List<BannerDto>? = null,
+    @Json(name = "quickServices") val quickServices: List<MenuItemServiceDto>? = null,
+    @Json(name = "popularServices") val popularServices: List<MenuItemServiceDto>? = null,
+    @Json(name = "homeServices") val homeServices: List<MenuItemServiceDto>? = null,
+    @Json(name = "homeServiceBooking") val homeServiceBooking: HomeServiceBookingDto? = null,
+    @Json(name = "priceList") val priceList: List<PriceListItemDto>? = null,
+    @Json(name = "offers") val offers: List<RemoteOfferDto>? = null,
+    @Json(name = "reviews") val reviews: List<ReviewDto>? = null,
+    @Json(name = "barbers") val barbers: List<BarberDto>? = null,
+    @Json(name = "galleryItems") val galleryItems: List<RemoteGalleryItemDto>? = null,
+    @Json(name = "whyChooseUs") val whyChooseUs: List<WhyChooseUsDto>? = null,
+    @Json(name = "profile") val profile: ProfileDto? = null,
+    @Json(name = "franchise") val franchise: FranchiseDto? = null,
+    @Json(name = "startup") val startup: StartupConfigDto? = null,
+    @Json(name = "splashScreen") val splashScreen: SplashScreenDto? = null,
+    @Json(name = "onboarding") val onboarding: OnboardingConfigDto? = null,
+    @Json(name = "login") val login: LoginConfigDto? = null,
+    @Json(name = "navigation") val navigation: NavigationConfigDto? = null,
+    @Json(name = "home") val home: HomeScreenConfigDto? = null,
+    @Json(name = "theme") val theme: ThemeConfigDto? = null,
+    @Json(name = "featureFlags") val featureFlags: Map<String, Boolean>? = null
 )
 
 @JsonClass(generateAdapter = true)
-data class SalonMasterConfigDto(
-    @Json(name = "schemaVersion") val schemaVersion: Int? = 1,
-    @Json(name = "configVersion") val configVersion: Int? = 1,
-    @Json(name = "salon") val salon: SalonInfoDto? = null,
-    @Json(name = "bottomNavigation") val bottomNavigation: List<NavItemDto>? = null,
-    @Json(name = "drawer") val drawer: List<NavItemDto>? = null,
-    @Json(name = "featureFlags") val featureFlags: Map<String, Boolean>? = null,
-    @Json(name = "whatsapp") val whatsapp: WhatsAppConfigDto? = null,
-    @Json(name = "contact") val contact: ContactInfoDto? = null,
-    @Json(name = "share") val share: ShareConfigDto? = null,
-    @Json(name = "legal") val legal: LegalConfigDto? = null,
-    @Json(name = "screens") val screens: Map<String, ScreenConfigDto>? = null
+data class ThemeColorsDto(
+    @Json(name = "primary") val primary: String? = null,
+    @Json(name = "primaryDark") val primaryDark: String? = null,
+    @Json(name = "secondary") val secondary: String? = null,
+    @Json(name = "background") val background: String? = null,
+    @Json(name = "surface") val surface: String? = null,
+    @Json(name = "textPrimary") val textPrimary: String? = null,
+    @Json(name = "textSecondary") val textSecondary: String? = null,
+    @Json(name = "buttonText") val buttonText: String? = null,
+    @Json(name = "divider") val divider: String? = null,
+    @Json(name = "error") val error: String? = null,
+    @Json(name = "success") val success: String? = null
 )
 
 @JsonClass(generateAdapter = true)
-data class SalonInfoDto(
-    @Json(name = "name") val name: String? = null,
-    @Json(name = "tagline") val tagline: String? = null,
+data class ThemeConfigDto(
+    @Json(name = "themeMode") val themeMode: String? = "dark",
+    @Json(name = "darkModeEnabled") val darkModeEnabled: Boolean? = true,
+    @Json(name = "colors") val colors: ThemeColorsDto? = null,
+    @Json(name = "primaryColor") val primaryColor: String? = null,
+    @Json(name = "secondaryColor") val secondaryColor: String? = null,
+    @Json(name = "backgroundColor") val backgroundColor: String? = null,
+    @Json(name = "surfaceColor") val surfaceColor: String? = null,
+    @Json(name = "textColor") val textColor: String? = null
+)
+
+@JsonClass(generateAdapter = true)
+data class StartupConfigDto(
+    @Json(name = "splashScreenId") val splashScreenId: String? = "splash",
+    @Json(name = "onboardingScreenId") val onboardingScreenId: String? = "onboarding",
+    @Json(name = "loginScreenId") val loginScreenId: String? = "login",
+    @Json(name = "homeScreenId") val homeScreenId: String? = "home",
+    @Json(name = "defaultDestination") val defaultDestination: String? = "home",
+    @Json(name = "requireLogin") val requireLogin: Boolean? = false
+)
+
+@JsonClass(generateAdapter = true)
+data class SplashScreenDto(
+    @Json(name = "enabled") val enabled: Boolean? = true,
     @Json(name = "logoUrl") val logoUrl: String? = null,
-    @Json(name = "phone") val phone: String? = null,
-    @Json(name = "whatsapp") val whatsapp: String? = null,
-    @Json(name = "address") val address: String? = null,
-    @Json(name = "aboutText") val aboutText: String? = null
+    @Json(name = "title") val title: String? = null,
+    @Json(name = "tagline") val tagline: String? = null,
+    @Json(name = "backgroundColor") val backgroundColor: String? = "#121212",
+    @Json(name = "textColor") val textColor: String? = "#FFFFFF",
+    @Json(name = "accentColor") val accentColor: String? = "#D4AF37",
+    @Json(name = "minimumDurationMs") val minimumDurationMs: Long? = 1500L,
+    @Json(name = "animationType") val animationType: String? = "fade"
 )
 
 @JsonClass(generateAdapter = true)
-data class NavItemDto(
-    @Json(name = "id") val id: String,
-    @Json(name = "title") val title: String,
-    @Json(name = "icon") val icon: String,
-    @Json(name = "route") val route: String,
-    @Json(name = "enabled") val enabled: Boolean = true,
-    @Json(name = "order") val order: Int = 0
+data class OnboardingConfigDto(
+    @Json(name = "id") val id: String? = null,
+    @Json(name = "enabled") val enabled: Boolean? = true,
+    @Json(name = "showSkip") val showSkip: Boolean? = null,
+    @Json(name = "allowSkip") val allowSkip: Boolean? = null,
+    @Json(name = "showOnlyOnFirstLaunch") val showOnlyOnFirstLaunch: Boolean? = null,
+    @Json(name = "nextButtonText") val nextButtonText: String? = null,
+    @Json(name = "previousButtonText") val previousButtonText: String? = null,
+    @Json(name = "skipButtonText") val skipButtonText: String? = null,
+    @Json(name = "finishButtonText") val finishButtonText: String? = null,
+    @Json(name = "pages") val pages: List<OnboardingPageDto>? = null
 )
 
 @JsonClass(generateAdapter = true)
-data class ScreenConfigDto(
-    @Json(name = "enabled") val enabled: Boolean = true,
-    @Json(name = "configUrl") val configUrl: String? = null
+data class OnboardingPageDto(
+    @Json(name = "id") val id: String? = null,
+    @Json(name = "order") val order: Int? = 0,
+    @Json(name = "title") val title: String? = null,
+    @Json(name = "description") val description: String? = null,
+    @Json(name = "illustrationUrl") val illustrationUrl: String? = null,
+    @Json(name = "imageUrl") val imageUrl: String? = null,
+    @Json(name = "nextLabel") val nextLabel: String? = null,
+    @Json(name = "skipLabel") val skipLabel: String? = null,
+    @Json(name = "getStartedLabel") val getStartedLabel: String? = null
 )
 
 @JsonClass(generateAdapter = true)
-data class WhatsAppConfigDto(
-    @Json(name = "enabled") val enabled: Boolean = true,
-    @Json(name = "number") val number: String? = null,
-    @Json(name = "appointmentMessage") val appointmentMessage: String? = null,
-    @Json(name = "homeServiceMessage") val homeServiceMessage: String? = null
+data class LoginConfigDto(
+    @Json(name = "enabled") val enabled: Boolean? = false,
+    @Json(name = "allowGuest") val allowGuest: Boolean? = true,
+    @Json(name = "title") val title: String? = null,
+    @Json(name = "subtitle") val subtitle: String? = null,
+    @Json(name = "logoUrl") val logoUrl: String? = null,
+    @Json(name = "phonePlaceholder") val phonePlaceholder: String? = null,
+    @Json(name = "continueAsGuestLabel") val continueAsGuestLabel: String? = null,
+    @Json(name = "loginButtonLabel") val loginButtonLabel: String? = null
 )
 
 @JsonClass(generateAdapter = true)
-data class ContactInfoDto(
-    @Json(name = "phone") val phone: String? = null,
-    @Json(name = "whatsapp") val whatsapp: String? = null,
-    @Json(name = "email") val email: String? = null,
-    @Json(name = "website") val website: String? = null,
-    @Json(name = "instagram") val instagram: String? = null,
-    @Json(name = "facebook") val facebook: String? = null,
-    @Json(name = "youtube") val youtube: String? = null,
-    @Json(name = "googleMaps") val googleMaps: String? = null
+data class NavigationConfigDto(
+    @Json(name = "drawerEnabled") val drawerEnabled: Boolean? = true,
+    @Json(name = "bottomNavigationEnabled") val bottomNavigationEnabled: Boolean? = true,
+    @Json(name = "drawerItems") val drawerItems: List<NavDestinationDto>? = null,
+    @Json(name = "bottomItems") val bottomItems: List<NavDestinationDto>? = null
 )
 
 @JsonClass(generateAdapter = true)
-data class ShareConfigDto(
-    @Json(name = "enabled") val enabled: Boolean = true,
-    @Json(name = "message") val message: String? = null,
-    @Json(name = "playStoreUrl") val playStoreUrl: String? = null
+data class NavDestinationDto(
+    @Json(name = "id") val id: String? = null,
+    @Json(name = "title") val title: String? = null,
+    @Json(name = "icon") val icon: String? = null,
+    @Json(name = "selectedIcon") val selectedIcon: String? = null,
+    @Json(name = "route") val route: String? = null,
+    @Json(name = "destination") val destination: String? = null,
+    @Json(name = "type") val type: String? = null,
+    @Json(name = "enabled") val enabled: Boolean? = true,
+    @Json(name = "order") val order: Int? = 0,
+    @Json(name = "badge") val badge: String? = null
 )
 
 @JsonClass(generateAdapter = true)
-data class LegalConfigDto(
-    @Json(name = "termsUrl") val termsUrl: String? = null,
-    @Json(name = "privacyUrl") val privacyUrl: String? = null
+data class HomeScreenConfigDto(
+    @Json(name = "enabled") val enabled: Boolean? = true,
+    @Json(name = "screenTitle") val screenTitle: String? = null,
+    @Json(name = "sections") val sections: List<HomeSectionConfigDto>? = null
 )
 
 @JsonClass(generateAdapter = true)
-data class HomeConfigDto(
-    @Json(name = "salon") val salon: SalonInfoDto? = null,
-    @Json(name = "sections") val sections: List<HomeSectionDto>? = null
+data class HomeSectionActionDto(
+    @Json(name = "type") val type: String? = null,
+    @Json(name = "destination") val destination: String? = null
 )
 
 @JsonClass(generateAdapter = true)
-data class HomeSectionDto(
-    @Json(name = "id") val id: String,
-    @Json(name = "type") val type: String,
+data class HomeSectionConfigDto(
+    @Json(name = "id") val id: String? = null,
+    @Json(name = "type") val type: String? = null,
     @Json(name = "title") val title: String? = null,
     @Json(name = "subtitle") val subtitle: String? = null,
     @Json(name = "imageUrl") val imageUrl: String? = null,
@@ -105,47 +165,100 @@ data class HomeSectionDto(
     @Json(name = "actionRoute") val actionRoute: String? = null,
     @Json(name = "sourceUrl") val sourceUrl: String? = null,
     @Json(name = "itemsToShow") val itemsToShow: Int? = null,
-    @Json(name = "enabled") val enabled: Boolean = true,
-    @Json(name = "order") val order: Int = 0
+    @Json(name = "maxItems") val maxItems: Int? = null,
+    @Json(name = "dataSource") val dataSource: String? = null,
+    @Json(name = "viewAllDestination") val viewAllDestination: String? = null,
+    @Json(name = "action") val action: HomeSectionActionDto? = null,
+    @Json(name = "itemAction") val itemAction: HomeSectionActionDto? = null,
+    @Json(name = "enabled") val enabled: Boolean? = true,
+    @Json(name = "order") val order: Int? = 0
 )
 
 @JsonClass(generateAdapter = true)
-data class ServicesConfigDto(
-    @Json(name = "categories") val categories: List<ServiceCategoryDto>? = null
+data class MetadataDto(
+    @Json(name = "schemaVersion") val schemaVersion: String? = null,
+    @Json(name = "lastUpdated") val lastUpdated: String? = null,
+    @Json(name = "locale") val locale: String? = null,
+    @Json(name = "currencyCode") val currencyCode: String? = null
 )
 
 @JsonClass(generateAdapter = true)
-data class ServiceCategoryDto(
-    @Json(name = "id") val id: String,
-    @Json(name = "name") val name: String,
-    @Json(name = "icon") val icon: String? = null,
-    @Json(name = "order") val order: Int = 0,
-    @Json(name = "services") val services: List<ServiceDto>? = null
+data class SalonDetailDto(
+    @Json(name = "id") val id: Any? = null,
+    @Json(name = "name") val name: String? = null,
+    @Json(name = "about") val about: String? = null,
+    @Json(name = "tagline") val tagline: String? = null,
+    @Json(name = "address") val address: String? = null,
+    @Json(name = "mobileNumber") val mobileNumber: String? = null,
+    @Json(name = "mobileNumberDial") val mobileNumberDial: String? = null,
+    @Json(name = "email") val email: String? = null,
+    @Json(name = "whatsappUrl") val whatsappUrl: String? = null,
+    @Json(name = "rating") val rating: Double? = null,
+    @Json(name = "totalReviews") val totalReviews: Int? = null,
+    @Json(name = "latitude") val latitude: Double? = null,
+    @Json(name = "longitude") val longitude: Double? = null,
+    @Json(name = "openingHours") val openingHours: String? = null,
+    @Json(name = "workingDays") val workingDays: String? = null,
+    @Json(name = "mapsEmbedUrl") val mapsEmbedUrl: String? = null,
+    @Json(name = "mapsSearchUrl") val mapsSearchUrl: String? = null,
+    @Json(name = "playStoreUrl") val playStoreUrl: String? = null,
+    @Json(name = "social") val social: SocialDto? = null
 )
 
 @JsonClass(generateAdapter = true)
-data class ServiceDto(
-    @Json(name = "id") val id: String,
-    @Json(name = "name") val name: String,
-    @Json(name = "description") val description: String? = null,
-    @Json(name = "price") val price: Double = 0.0,
-    @Json(name = "currency") val currency: String = "INR",
-    @Json(name = "durationMinutes") val durationMinutes: Int = 30,
+data class SocialDto(
+    @Json(name = "instagram") val instagram: String? = null,
+    @Json(name = "facebook") val facebook: String? = null
+)
+
+@JsonClass(generateAdapter = true)
+data class BannerDto(
+    @Json(name = "id") val id: Any? = null,
     @Json(name = "imageUrl") val imageUrl: String? = null,
-    @Json(name = "featured") val featured: Boolean = false,
-    @Json(name = "bookingEnabled") val bookingEnabled: Boolean = true,
-    @Json(name = "homeServiceAvailable") val homeServiceAvailable: Boolean = false
+    @Json(name = "title") val title: String? = null,
+    @Json(name = "subtitle") val subtitle: String? = null,
+    @Json(name = "category") val category: String? = null,
+    @Json(name = "serviceType") val serviceType: String? = null,
+    @Json(name = "isAvailable") val isAvailable: Boolean? = true
 )
 
 @JsonClass(generateAdapter = true)
-data class OffersConfigDto(
-    @Json(name = "offers") val offers: List<OfferDto>? = null
+data class MenuItemServiceDto(
+    @Json(name = "id") val id: Any? = null,
+    @Json(name = "name") val name: String? = null,
+    @Json(name = "description") val description: String? = null,
+    @Json(name = "price") val price: Double? = null,
+    @Json(name = "imageUrl") val imageUrl: String? = null,
+    @Json(name = "category") val category: String? = null,
+    @Json(name = "serviceType") val serviceType: String? = null,
+    @Json(name = "isAvailable") val isAvailable: Boolean? = true
 )
 
 @JsonClass(generateAdapter = true)
-data class OfferDto(
-    @Json(name = "id") val id: String,
-    @Json(name = "title") val title: String,
+data class HomeServiceBookingDto(
+    @Json(name = "enabled") val enabled: Boolean? = false,
+    @Json(name = "minimumBookingAmount") val minimumBookingAmount: Double? = null,
+    @Json(name = "serviceCharge") val serviceCharge: Double? = null,
+    @Json(name = "freeServiceChargeAbove") val freeServiceChargeAbove: Double? = null,
+    @Json(name = "advanceBookingHours") val advanceBookingHours: Int? = null,
+    @Json(name = "bookingMessage") val bookingMessage: String? = null,
+    @Json(name = "availableDays") val availableDays: List<String>? = null,
+    @Json(name = "timeSlots") val timeSlots: List<String>? = null
+)
+
+@JsonClass(generateAdapter = true)
+data class PriceListItemDto(
+    @Json(name = "id") val id: Any? = null,
+    @Json(name = "name") val name: String? = null,
+    @Json(name = "price") val price: Double? = null,
+    @Json(name = "category") val category: String? = null,
+    @Json(name = "description") val description: String? = null
+)
+
+@JsonClass(generateAdapter = true)
+data class RemoteOfferDto(
+    @Json(name = "id") val id: Any? = null,
+    @Json(name = "title") val title: String? = null,
     @Json(name = "subtitle") val subtitle: String? = null,
     @Json(name = "description") val description: String? = null,
     @Json(name = "imageUrl") val imageUrl: String? = null,
@@ -156,72 +269,85 @@ data class OfferDto(
     @Json(name = "terms") val terms: String? = null,
     @Json(name = "ctaText") val ctaText: String? = null,
     @Json(name = "ctaAction") val ctaAction: String? = null,
-    @Json(name = "enabled") val enabled: Boolean = true
+    @Json(name = "enabled") val enabled: Boolean? = true
 )
 
 @JsonClass(generateAdapter = true)
-data class GalleryConfigDto(
-    @Json(name = "categories") val categories: List<GalleryCategoryDto>? = null,
-    @Json(name = "images") val images: List<GalleryImageDto>? = null
+data class ReviewDto(
+    @Json(name = "id") val id: Any? = null,
+    @Json(name = "author") val author: String? = null,
+    @Json(name = "rating") val rating: Double? = null,
+    @Json(name = "comment") val comment: String? = null,
+    @Json(name = "date") val date: String? = null,
+    @Json(name = "avatarUrl") val avatarUrl: String? = null
 )
 
 @JsonClass(generateAdapter = true)
-data class GalleryCategoryDto(
-    @Json(name = "id") val id: String,
-    @Json(name = "name") val name: String
+data class BarberDto(
+    @Json(name = "id") val id: Any? = null,
+    @Json(name = "name") val name: String? = null,
+    @Json(name = "expertise") val expertise: String? = null,
+    @Json(name = "imageUrl") val imageUrl: String? = null
 )
 
 @JsonClass(generateAdapter = true)
-data class GalleryImageDto(
-    @Json(name = "id") val id: String,
-    @Json(name = "categoryId") val categoryId: String? = null,
-    @Json(name = "title") val title: String? = null,
-    @Json(name = "description") val description: String? = null,
-    @Json(name = "thumbnailUrl") val thumbnailUrl: String? = null,
+data class RemoteGalleryItemDto(
+    @Json(name = "id") val id: Any? = null,
     @Json(name = "imageUrl") val imageUrl: String? = null,
-    @Json(name = "enabled") val enabled: Boolean = true,
-    @Json(name = "featured") val featured: Boolean = false,
-    @Json(name = "order") val order: Int = 0
+    @Json(name = "title") val title: String? = null,
+    @Json(name = "aspectRatio") val aspectRatio: Double? = null
 )
 
 @JsonClass(generateAdapter = true)
-data class LocationsConfigDto(
-    @Json(name = "branches") val branches: List<BranchDto>? = null
+data class WhyChooseUsDto(
+    @Json(name = "id") val id: Any? = null,
+    @Json(name = "icon") val icon: String? = null,
+    @Json(name = "title") val title: String? = null,
+    @Json(name = "description") val description: String? = null
 )
 
 @JsonClass(generateAdapter = true)
-data class BranchDto(
-    @Json(name = "id") val id: String,
-    @Json(name = "name") val name: String,
-    @Json(name = "tagline") val tagline: String? = null,
-    @Json(name = "address") val address: String,
-    @Json(name = "phone") val phone: String? = null,
-    @Json(name = "whatsapp") val whatsapp: String? = null,
-    @Json(name = "latitude") val latitude: Double? = null,
-    @Json(name = "longitude") val longitude: Double? = null,
-    @Json(name = "googleMapsUrl") val googleMapsUrl: String? = null,
-    @Json(name = "openingTime") val openingTime: String? = null,
-    @Json(name = "closingTime") val closingTime: String? = null,
-    @Json(name = "timings") val timings: String? = null,
-    @Json(name = "enabled") val enabled: Boolean = true,
-    @Json(name = "isPrimary") val isPrimary: Boolean = false
+data class ProfileDto(
+    @Json(name = "appName") val appName: String? = null,
+    @Json(name = "appVersion") val appVersion: String? = null,
+    @Json(name = "shareMessage") val shareMessage: String? = null,
+    @Json(name = "supportEmail") val supportEmail: String? = null,
+    @Json(name = "supportPhone") val supportPhone: String? = null,
+    @Json(name = "privacyPolicyUrl") val privacyPolicyUrl: String? = null,
+    @Json(name = "termsUrl") val termsUrl: String? = null,
+    @Json(name = "aboutUs") val aboutUs: String? = null,
+    @Json(name = "darkModeEnabled") val darkModeEnabled: Boolean? = true,
+    @Json(name = "notificationEnabled") val notificationEnabled: Boolean? = true,
+    @Json(name = "menuItems") val menuItems: List<ProfileMenuItemDto>? = null
 )
 
 @JsonClass(generateAdapter = true)
-data class BookingConfigDto(
+data class ProfileMenuItemDto(
+    @Json(name = "id") val id: Any? = null,
+    @Json(name = "title") val title: String? = null,
+    @Json(name = "type") val type: String? = null,
+    @Json(name = "enabled") val enabled: Boolean? = true,
+    @Json(name = "icon") val icon: String? = null
+)
+
+@JsonClass(generateAdapter = true)
+data class FranchiseDto(
+    @Json(name = "enabled") val enabled: Boolean? = false,
     @Json(name = "title") val title: String? = null,
     @Json(name = "subtitle") val subtitle: String? = null,
-    @Json(name = "fields") val fields: List<BookingFieldDto>? = null,
-    @Json(name = "enabled") val enabled: Boolean = true
-)
-
-@JsonClass(generateAdapter = true)
-data class BookingFieldDto(
-    @Json(name = "id") val id: String,
-    @Json(name = "label") val label: String,
-    @Json(name = "type") val type: String,
-    @Json(name = "placeholder") val placeholder: String? = null,
-    @Json(name = "required") val required: Boolean = true,
-    @Json(name = "order") val order: Int = 0,
-    @Json(name = "options") val options: List<String>? = null
+    @Json(name = "description") val description: String? = null,
+    @Json(name = "investment") val investment: String? = null,
+    @Json(name = "franchiseFee") val franchiseFee: String? = null,
+    @Json(name = "shopArea") val shopArea: String? = null,
+    @Json(name = "preferredLocation") val preferredLocation: String? = null,
+    @Json(name = "expectedROI") val expectedROI: String? = null,
+    @Json(name = "support") val support: List<String>? = null,
+    @Json(name = "requirements") val requirements: List<String>? = null,
+    @Json(name = "benefits") val benefits: List<String>? = null,
+    @Json(name = "contactPerson") val contactPerson: String? = null,
+    @Json(name = "contactNumber") val contactNumber: String? = null,
+    @Json(name = "email") val email: String? = null,
+    @Json(name = "whatsApp") val whatsApp: String? = null,
+    @Json(name = "website") val website: String? = null,
+    @Json(name = "bannerImage") val bannerImage: String? = null
 )

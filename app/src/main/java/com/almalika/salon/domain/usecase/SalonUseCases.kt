@@ -36,6 +36,12 @@ class GetOffersUseCase @Inject constructor(
     }
 }
 
+class GetReviewsUseCase @Inject constructor(
+    private val repository: SalonRepository
+) {
+    operator fun invoke(): Flow<List<Review>> = repository.getReviews()
+}
+
 class GetGalleryUseCase @Inject constructor(
     private val repository: SalonRepository
 ) {
