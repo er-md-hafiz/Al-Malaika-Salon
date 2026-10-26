@@ -48,6 +48,10 @@ captures/
 *.jks
 *.keystore
 signing.properties
+keystore.properties
+AlMalaikaSalon*
+release/
+*/release/
 
 # Secrets and credential files
 secrets.properties
