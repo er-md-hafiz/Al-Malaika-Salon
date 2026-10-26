@@ -87,6 +87,25 @@ object DatabaseModule {
 
 @Module
 @InstallIn(SingletonComponent::class)
+object FirebaseModule {
+
+    @Provides
+    @Singleton
+    fun provideFirebaseAuth(): com.google.firebase.auth.FirebaseAuth {
+        return com.google.firebase.auth.FirebaseAuth.getInstance()
+    }
+
+    private const val FIREBASE_RTDB_URL = "https://al-malika-salon-default-rtdb.firebaseio.com/"
+
+    @Provides
+    @Singleton
+    fun provideFirebaseDatabase(): com.google.firebase.database.FirebaseDatabase {
+        return com.google.firebase.database.FirebaseDatabase.getInstance(FIREBASE_RTDB_URL)
+    }
+}
+
+@Module
+@InstallIn(SingletonComponent::class)
 abstract class RepositoryModule {
 
     @Binds
@@ -94,4 +113,10 @@ abstract class RepositoryModule {
     abstract fun bindSalonRepository(
         repositoryImpl: SalonRepositoryImpl
     ): SalonRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindAuthRepository(
+        repositoryImpl: com.almalika.salon.data.repository.AuthRepositoryImpl
+    ): com.almalika.salon.domain.repository.AuthRepository
 }

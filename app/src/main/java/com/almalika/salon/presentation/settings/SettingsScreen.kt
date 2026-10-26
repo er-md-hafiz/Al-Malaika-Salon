@@ -39,6 +39,15 @@ fun SettingsScreen(
         }
 
         item {
+            SettingsRow(
+                title = "My Account & Profile",
+                subtitle = "Manage your login, guest status, and salon profile",
+                icon = Icons.Default.AccountCircle,
+                onClick = { onAction(AppAction.Account) }
+            )
+        }
+
+        item {
             Card(
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(14.dp)

@@ -61,14 +61,62 @@
     ]
   },
   "login": {
-    "enabled": false,
+    "id": "login",
+    "enabled": true,
+    "authMode": "firebase_email_password",
     "allowGuest": true,
     "title": "Welcome Back",
-    "subtitle": "Sign in to access personalized grooming services",
+    "subtitle": "Sign in to your Al-Malaika Salon account.",
     "logoUrl": "",
-    "phonePlaceholder": "Enter 10-digit mobile number",
-    "continueAsGuestLabel": "Continue as Guest",
-    "loginButtonLabel": "Sign In"
+    "backgroundColor": "#101010",
+    "textColor": "#FFFFFF",
+    "accentColor": "#D4AF37",
+    "showEmailLogin": true,
+    "showPhoneLogin": false,
+    "showRegister": true,
+    "showForgotPassword": true,
+    "showGuestButton": true,
+    "guestButtonText": "Continue as Guest",
+    "loginButtonText": "Sign In",
+    "registerButtonText": "Create Account",
+    "forgotPasswordButtonText": "Forgot Password?",
+    "privacyPolicyUrl": "https://er-md-hafiz.github.io/api.almalaikasalon/privacy.html",
+    "termsUrl": "https://er-md-hafiz.github.io/api.almalaikasalon/terms.html",
+    "registerDestination": "register",
+    "forgotPasswordDestination": "forgot_password",
+    "successDestination": "home"
+  },
+  "register": {
+    "id": "register",
+    "enabled": true,
+    "title": "Create Your Account",
+    "subtitle": "Register with your email address.",
+    "showFullName": true,
+    "showEmail": true,
+    "showPassword": true,
+    "showConfirmPassword": true,
+    "requireTermsAcceptance": true,
+    "sendEmailVerification": true,
+    "termsUrl": "https://er-md-hafiz.github.io/api.almalaikasalon/terms.html",
+    "privacyPolicyUrl": "https://er-md-hafiz.github.io/api.almalaikasalon/privacy.html",
+    "loginDestination": "login",
+    "successDestination": "home"
+  },
+  "forgotPassword": {
+    "id": "forgot_password",
+    "enabled": true,
+    "title": "Reset Your Password",
+    "subtitle": "Enter your email address to request a password reset.",
+    "emailRequired": true,
+    "loginDestination": "login"
+  },
+  "authentication": {
+    "provider": "firebase",
+    "emailPasswordEnabled": true,
+    "anonymousEnabled": true,
+    "phoneAuthEnabled": false,
+    "guestAccountLinkingEnabled": true,
+    "persistSession": true
   },
   "navigation": {
     "drawerEnabled": true,
@@ -85,10 +133,11 @@
       { "id": "about", "title": "About Us", "icon": "info", "route": "about", "enabled": true, "order": 9 },
       { "id": "contact", "title": "Contact Us", "icon": "call", "route": "contact", "enabled": true, "order": 10 },
       { "id": "settings", "title": "Settings", "icon": "settings", "route": "settings", "enabled": true, "order": 11 },
-      { "id": "share", "title": "Share App", "icon": "share", "route": "action:share", "enabled": true, "order": 12 },
-      { "id": "rate", "title": "Rate Us", "icon": "star", "route": "action:rate", "enabled": true, "order": 13 },
-      { "id": "terms", "title": "Terms & Conditions", "icon": "description", "route": "terms", "enabled": true, "order": 14 },
-      { "id": "privacy", "title": "Privacy Policy", "icon": "privacy_tip", "route": "privacy", "enabled": true, "order": 15 }
+      { "id": "account", "title": "My Account", "icon": "face", "route": "account", "enabled": true, "order": 12 },
+      { "id": "share", "title": "Share App", "icon": "share", "route": "action:share", "enabled": true, "order": 13 },
+      { "id": "rate", "title": "Rate Us", "icon": "star", "route": "action:rate", "enabled": true, "order": 14 },
+      { "id": "terms", "title": "Terms & Conditions", "icon": "description", "route": "terms", "enabled": true, "order": 15 },
+      { "id": "privacy", "title": "Privacy Policy", "icon": "privacy_tip", "route": "privacy", "enabled": true, "order": 16 }
     ],
     "bottomItems": [
       { "id": "home", "title": "Home", "icon": "home", "route": "home", "enabled": true, "order": 1 },

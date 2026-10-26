@@ -33,6 +33,7 @@ object IconResolver {
             "palette" -> Icons.Default.Palette
             "spa" -> Icons.Default.Spa
             "child_care" -> Icons.Default.ChildCare
+            "account", "profile", "person", "user" -> Icons.Default.AccountCircle
             "store", "storefront" -> Icons.Default.Storefront
             else -> Icons.Default.Circle
         }

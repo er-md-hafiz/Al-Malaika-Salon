@@ -25,5 +25,9 @@ sealed interface AppAction {
     data object RateApp : AppAction
     data object Terms : AppAction
     data object Privacy : AppAction
+    data object Login : AppAction
+    data object Register : AppAction
+    data object ForgotPassword : AppAction
+    data object Account : AppAction
     data class OpenUrl(val url: String, val title: String = "") : AppAction
 }

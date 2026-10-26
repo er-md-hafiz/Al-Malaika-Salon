@@ -47,6 +47,10 @@ import com.almalika.salon.presentation.services.ServicesScreen
 import com.almalika.salon.presentation.services.ServicesViewModel
 import com.almalika.salon.presentation.settings.SettingsScreen
 import com.almalika.salon.presentation.login.LoginScreen
+import com.almalika.salon.presentation.register.RegisterScreen
+import com.almalika.salon.presentation.forgotpassword.ForgotPasswordScreen
+import com.almalika.salon.presentation.account.AccountScreen
+import com.almalika.salon.presentation.auth.AuthViewModel
 import com.almalika.salon.presentation.onboarding.OnboardingScreen
 import com.almalika.salon.presentation.splash.SplashScreen
 import kotlinx.coroutines.launch
@@ -92,7 +96,7 @@ fun MainAppShell(
 
             val navBackStackEntry by navController.currentBackStackEntryAsState()
             val currentRoute = navBackStackEntry?.destination?.route ?: "splash"
-            val isRootFlowScreen = currentRoute in listOf("splash", "onboarding", "login")
+            val isRootFlowScreen = currentRoute in listOf("splash", "onboarding", "login", "register", "forgot_password")
 
             val startDestination = remember {
                 if (master.splashScreen.enabled) {
@@ -142,6 +146,10 @@ fun MainAppShell(
                     is AppAction.Settings -> navController.navigate("settings") { launchSingleTop = true }
                     is AppAction.Terms -> navController.navigate("terms") { launchSingleTop = true }
                     is AppAction.Privacy -> navController.navigate("privacy") { launchSingleTop = true }
+                    is AppAction.Login -> navController.navigate("login") { launchSingleTop = true }
+                    is AppAction.Register -> navController.navigate("register") { launchSingleTop = true }
+                    is AppAction.ForgotPassword -> navController.navigate("forgot_password") { launchSingleTop = true }
+                    is AppAction.Account -> navController.navigate("account") { launchSingleTop = true }
                     else -> ActionExecutor.execute(context, action)
                 }
             }
@@ -270,8 +278,21 @@ fun MainAppShell(
                         }
 
                         composable("login") {
+                            val authVm: AuthViewModel = hiltViewModel()
                             LoginScreen(
                                 config = master.login,
+                                viewModel = authVm,
+                                onLoginSuccess = {
+                                    navController.navigate("home") {
+                                        popUpTo("login") { inclusive = true }
+                                    }
+                                },
+                                onRegisterClick = {
+                                    navController.navigate("register") { launchSingleTop = true }
+                                },
+                                onForgotPasswordClick = {
+                                    navController.navigate("forgot_password") { launchSingleTop = true }
+                                },
                                 onGuestLogin = {
                                     navController.navigate("home") {
                                         popUpTo("login") { inclusive = true }
@@ -279,6 +300,48 @@ fun MainAppShell(
                                 },
                                 onOpenTerms = { handleAction(AppAction.Terms) },
                                 onOpenPrivacy = { handleAction(AppAction.Privacy) }
+                            )
+                        }
+
+                        composable("register") {
+                            val authVm: AuthViewModel = hiltViewModel()
+                            RegisterScreen(
+                                config = master.register,
+                                viewModel = authVm,
+                                onRegisterSuccess = {
+                                    navController.navigate("home") {
+                                        popUpTo("register") { inclusive = true }
+                                    }
+                                },
+                                onLoginClick = {
+                                    navController.navigate("login") {
+                                        popUpTo("register") { inclusive = true }
+                                    }
+                                },
+                                onOpenTerms = { handleAction(AppAction.Terms) },
+                                onOpenPrivacy = { handleAction(AppAction.Privacy) }
+                            )
+                        }
+
+                        composable("forgot_password") {
+                            val authVm: AuthViewModel = hiltViewModel()
+                            ForgotPasswordScreen(
+                                config = master.forgotPassword,
+                                viewModel = authVm,
+                                onLoginClick = {
+                                    navController.navigate("login") {
+                                        popUpTo("forgot_password") { inclusive = true }
+                                    }
+                                }
+                            )
+                        }
+
+                        composable("account") {
+                            val authVm: AuthViewModel = hiltViewModel()
+                            AccountScreen(
+                                master = master,
+                                viewModel = authVm,
+                                onAction = handleAction
                             )
                         }
 
@@ -378,6 +441,10 @@ fun getScreenTitle(route: String, master: SalonMasterConfig): String {
         "settings" -> "Settings"
         "terms" -> "Terms & Conditions"
         "privacy" -> "Privacy Policy"
+        "login" -> master.login.title.ifBlank { "Sign In" }
+        "register" -> master.register.title.ifBlank { "Create Account" }
+        "forgot_password" -> master.forgotPassword.title.ifBlank { "Reset Password" }
+        "account" -> "My Account"
         else -> master.salon.name
     }
 }

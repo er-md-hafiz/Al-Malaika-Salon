@@ -24,6 +24,9 @@ data class MenuResponseDto(
     @Json(name = "splashScreen") val splashScreen: SplashScreenDto? = null,
     @Json(name = "onboarding") val onboarding: OnboardingConfigDto? = null,
     @Json(name = "login") val login: LoginConfigDto? = null,
+    @Json(name = "register") val register: RegisterConfigDto? = null,
+    @Json(name = "forgotPassword") val forgotPassword: ForgotPasswordConfigDto? = null,
+    @Json(name = "authentication") val authentication: AuthenticationConfigDto? = null,
     @Json(name = "navigation") val navigation: NavigationConfigDto? = null,
     @Json(name = "home") val home: HomeScreenConfigDto? = null,
     @Json(name = "theme") val theme: ThemeConfigDto? = null,
@@ -109,14 +112,71 @@ data class OnboardingPageDto(
 
 @JsonClass(generateAdapter = true)
 data class LoginConfigDto(
-    @Json(name = "enabled") val enabled: Boolean? = false,
+    @Json(name = "id") val id: String? = null,
+    @Json(name = "enabled") val enabled: Boolean? = true,
+    @Json(name = "authMode") val authMode: String? = null,
     @Json(name = "allowGuest") val allowGuest: Boolean? = true,
     @Json(name = "title") val title: String? = null,
     @Json(name = "subtitle") val subtitle: String? = null,
     @Json(name = "logoUrl") val logoUrl: String? = null,
+    @Json(name = "backgroundColor") val backgroundColor: String? = null,
+    @Json(name = "textColor") val textColor: String? = null,
+    @Json(name = "accentColor") val accentColor: String? = null,
+    @Json(name = "showEmailLogin") val showEmailLogin: Boolean? = true,
+    @Json(name = "showPhoneLogin") val showPhoneLogin: Boolean? = false,
+    @Json(name = "showRegister") val showRegister: Boolean? = true,
+    @Json(name = "showForgotPassword") val showForgotPassword: Boolean? = true,
+    @Json(name = "showGuestButton") val showGuestButton: Boolean? = true,
     @Json(name = "phonePlaceholder") val phonePlaceholder: String? = null,
     @Json(name = "continueAsGuestLabel") val continueAsGuestLabel: String? = null,
-    @Json(name = "loginButtonLabel") val loginButtonLabel: String? = null
+    @Json(name = "guestButtonText") val guestButtonText: String? = null,
+    @Json(name = "loginButtonLabel") val loginButtonLabel: String? = null,
+    @Json(name = "loginButtonText") val loginButtonText: String? = null,
+    @Json(name = "registerButtonText") val registerButtonText: String? = null,
+    @Json(name = "forgotPasswordButtonText") val forgotPasswordButtonText: String? = null,
+    @Json(name = "privacyPolicyUrl") val privacyPolicyUrl: String? = null,
+    @Json(name = "termsUrl") val termsUrl: String? = null,
+    @Json(name = "registerDestination") val registerDestination: String? = null,
+    @Json(name = "forgotPasswordDestination") val forgotPasswordDestination: String? = null,
+    @Json(name = "successDestination") val successDestination: String? = null
+)
+
+@JsonClass(generateAdapter = true)
+data class RegisterConfigDto(
+    @Json(name = "id") val id: String? = null,
+    @Json(name = "enabled") val enabled: Boolean? = true,
+    @Json(name = "title") val title: String? = null,
+    @Json(name = "subtitle") val subtitle: String? = null,
+    @Json(name = "showFullName") val showFullName: Boolean? = true,
+    @Json(name = "showEmail") val showEmail: Boolean? = true,
+    @Json(name = "showPassword") val showPassword: Boolean? = true,
+    @Json(name = "showConfirmPassword") val showConfirmPassword: Boolean? = true,
+    @Json(name = "requireTermsAcceptance") val requireTermsAcceptance: Boolean? = true,
+    @Json(name = "sendEmailVerification") val sendEmailVerification: Boolean? = true,
+    @Json(name = "termsUrl") val termsUrl: String? = null,
+    @Json(name = "privacyPolicyUrl") val privacyPolicyUrl: String? = null,
+    @Json(name = "loginDestination") val loginDestination: String? = null,
+    @Json(name = "successDestination") val successDestination: String? = null
+)
+
+@JsonClass(generateAdapter = true)
+data class ForgotPasswordConfigDto(
+    @Json(name = "id") val id: String? = null,
+    @Json(name = "enabled") val enabled: Boolean? = true,
+    @Json(name = "title") val title: String? = null,
+    @Json(name = "subtitle") val subtitle: String? = null,
+    @Json(name = "emailRequired") val emailRequired: Boolean? = true,
+    @Json(name = "loginDestination") val loginDestination: String? = null
+)
+
+@JsonClass(generateAdapter = true)
+data class AuthenticationConfigDto(
+    @Json(name = "provider") val provider: String? = "firebase",
+    @Json(name = "emailPasswordEnabled") val emailPasswordEnabled: Boolean? = true,
+    @Json(name = "anonymousEnabled") val anonymousEnabled: Boolean? = true,
+    @Json(name = "phoneAuthEnabled") val phoneAuthEnabled: Boolean? = false,
+    @Json(name = "guestAccountLinkingEnabled") val guestAccountLinkingEnabled: Boolean? = true,
+    @Json(name = "persistSession") val persistSession: Boolean? = true
 )
 
 @JsonClass(generateAdapter = true)

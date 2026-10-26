@@ -104,14 +104,74 @@ fun OnboardingConfigDto.toDomain(): OnboardingConfig {
 
 fun LoginConfigDto.toDomain(): LoginConfig {
     return LoginConfig(
-        enabled = enabled ?: false,
+        id = id?.ifBlank { "login" } ?: "login",
+        enabled = enabled ?: true,
+        authMode = authMode?.ifBlank { "firebase_email_password" } ?: "firebase_email_password",
         allowGuest = allowGuest ?: true,
-        title = title?.ifBlank { "Welcome" } ?: "Welcome",
-        subtitle = subtitle?.ifBlank { "Sign in to your account" } ?: "Sign in to your account",
+        title = title?.ifBlank { "Welcome Back" } ?: "Welcome Back",
+        subtitle = subtitle?.ifBlank { "Sign in to your Al-Malaika Salon account." } ?: "Sign in to your Al-Malaika Salon account.",
         logoUrl = logoUrl.orEmpty(),
-        phonePlaceholder = phonePlaceholder?.ifBlank { "Enter mobile number" } ?: "Enter mobile number",
-        continueAsGuestLabel = continueAsGuestLabel?.ifBlank { "Continue as Guest" } ?: "Continue as Guest",
-        loginButtonLabel = loginButtonLabel?.ifBlank { "Sign In" } ?: "Sign In"
+        backgroundColor = backgroundColor?.ifBlank { "#101010" } ?: "#101010",
+        textColor = textColor?.ifBlank { "#FFFFFF" } ?: "#FFFFFF",
+        accentColor = accentColor?.ifBlank { "#D4AF37" } ?: "#D4AF37",
+        showEmailLogin = showEmailLogin ?: true,
+        showPhoneLogin = showPhoneLogin ?: false,
+        showRegister = showRegister ?: true,
+        showForgotPassword = showForgotPassword ?: true,
+        showGuestButton = showGuestButton ?: true,
+        guestButtonText = guestButtonText?.ifBlank { null } ?: continueAsGuestLabel?.ifBlank { "Continue as Guest" } ?: "Continue as Guest",
+        loginButtonText = loginButtonText?.ifBlank { null } ?: loginButtonLabel?.ifBlank { "Sign In" } ?: "Sign In",
+        registerButtonText = registerButtonText?.ifBlank { "Create Account" } ?: "Create Account",
+        forgotPasswordButtonText = forgotPasswordButtonText?.ifBlank { "Forgot Password?" } ?: "Forgot Password?",
+        privacyPolicyUrl = privacyPolicyUrl?.ifBlank { "https://er-md-hafiz.github.io/api.almalaikasalon/privacy.html" } ?: "https://er-md-hafiz.github.io/api.almalaikasalon/privacy.html",
+        termsUrl = termsUrl?.ifBlank { "https://er-md-hafiz.github.io/api.almalaikasalon/terms.html" } ?: "https://er-md-hafiz.github.io/api.almalaikasalon/terms.html",
+        registerDestination = registerDestination?.ifBlank { "register" } ?: "register",
+        forgotPasswordDestination = forgotPasswordDestination?.ifBlank { "forgot_password" } ?: "forgot_password",
+        successDestination = successDestination?.ifBlank { "home" } ?: "home",
+        phonePlaceholder = phonePlaceholder?.ifBlank { "Enter 10-digit mobile number" } ?: "Enter 10-digit mobile number",
+        continueAsGuestLabel = continueAsGuestLabel?.ifBlank { null } ?: guestButtonText?.ifBlank { "Continue as Guest" } ?: "Continue as Guest",
+        loginButtonLabel = loginButtonLabel?.ifBlank { null } ?: loginButtonText?.ifBlank { "Sign In" } ?: "Sign In"
+    )
+}
+
+fun RegisterConfigDto.toDomain(): RegisterConfig {
+    return RegisterConfig(
+        id = id?.ifBlank { "register" } ?: "register",
+        enabled = enabled ?: true,
+        title = title?.ifBlank { "Create Your Account" } ?: "Create Your Account",
+        subtitle = subtitle?.ifBlank { "Register with your email address." } ?: "Register with your email address.",
+        showFullName = showFullName ?: true,
+        showEmail = showEmail ?: true,
+        showPassword = showPassword ?: true,
+        showConfirmPassword = showConfirmPassword ?: true,
+        requireTermsAcceptance = requireTermsAcceptance ?: true,
+        sendEmailVerification = sendEmailVerification ?: true,
+        termsUrl = termsUrl?.ifBlank { "https://er-md-hafiz.github.io/api.almalaikasalon/terms.html" } ?: "https://er-md-hafiz.github.io/api.almalaikasalon/terms.html",
+        privacyPolicyUrl = privacyPolicyUrl?.ifBlank { "https://er-md-hafiz.github.io/api.almalaikasalon/privacy.html" } ?: "https://er-md-hafiz.github.io/api.almalaikasalon/privacy.html",
+        loginDestination = loginDestination?.ifBlank { "login" } ?: "login",
+        successDestination = successDestination?.ifBlank { "home" } ?: "home"
+    )
+}
+
+fun ForgotPasswordConfigDto.toDomain(): ForgotPasswordConfig {
+    return ForgotPasswordConfig(
+        id = id?.ifBlank { "forgot_password" } ?: "forgot_password",
+        enabled = enabled ?: true,
+        title = title?.ifBlank { "Reset Your Password" } ?: "Reset Your Password",
+        subtitle = subtitle?.ifBlank { "Enter your email address to request a password reset." } ?: "Enter your email address to request a password reset.",
+        emailRequired = emailRequired ?: true,
+        loginDestination = loginDestination?.ifBlank { "login" } ?: "login"
+    )
+}
+
+fun AuthenticationConfigDto.toDomain(): AuthenticationConfig {
+    return AuthenticationConfig(
+        provider = provider?.ifBlank { "firebase" } ?: "firebase",
+        emailPasswordEnabled = emailPasswordEnabled ?: true,
+        anonymousEnabled = anonymousEnabled ?: true,
+        phoneAuthEnabled = phoneAuthEnabled ?: false,
+        guestAccountLinkingEnabled = guestAccountLinkingEnabled ?: true,
+        persistSession = persistSession ?: true
     )
 }
 
@@ -280,6 +340,9 @@ fun MenuResponseDto.toDomain(): SalonMasterConfig {
         splashScreen = splashScreen?.toDomain() ?: SplashScreenConfig(),
         onboarding = onboarding?.toDomain() ?: OnboardingConfig(),
         login = login?.toDomain() ?: LoginConfig(),
+        register = register?.toDomain() ?: RegisterConfig(),
+        forgotPassword = forgotPassword?.toDomain() ?: ForgotPasswordConfig(),
+        authentication = authentication?.toDomain() ?: AuthenticationConfig(),
         navigation = navConfig,
         theme = theme?.toDomain() ?: ThemeConfig()
     )

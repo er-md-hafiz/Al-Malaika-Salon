@@ -17,6 +17,9 @@ data class SalonMasterConfig(
     val splashScreen: SplashScreenConfig = SplashScreenConfig(),
     val onboarding: OnboardingConfig = OnboardingConfig(),
     val login: LoginConfig = LoginConfig(),
+    val register: RegisterConfig = RegisterConfig(),
+    val forgotPassword: ForgotPasswordConfig = ForgotPasswordConfig(),
+    val authentication: AuthenticationConfig = AuthenticationConfig(),
     val navigation: NavigationConfig = NavigationConfig(),
     val theme: ThemeConfig = ThemeConfig()
 )
@@ -68,15 +71,100 @@ data class OnboardingPage(
 )
 
 data class LoginConfig(
-    val enabled: Boolean = false,
+    val id: String = "login",
+    val enabled: Boolean = true,
+    val authMode: String = "firebase_email_password",
     val allowGuest: Boolean = true,
-    val title: String = "Welcome",
-    val subtitle: String = "Sign in to your account",
+    val title: String = "Welcome Back",
+    val subtitle: String = "Sign in to your Al-Malaika Salon account.",
     val logoUrl: String = "",
-    val phonePlaceholder: String = "Enter mobile number",
+    val backgroundColor: String = "#101010",
+    val textColor: String = "#FFFFFF",
+    val accentColor: String = "#D4AF37",
+    val showEmailLogin: Boolean = true,
+    val showPhoneLogin: Boolean = false,
+    val showRegister: Boolean = true,
+    val showForgotPassword: Boolean = true,
+    val showGuestButton: Boolean = true,
+    val guestButtonText: String = "Continue as Guest",
+    val loginButtonText: String = "Sign In",
+    val registerButtonText: String = "Create Account",
+    val forgotPasswordButtonText: String = "Forgot Password?",
+    val privacyPolicyUrl: String = "https://er-md-hafiz.github.io/api.almalaikasalon/privacy.html",
+    val termsUrl: String = "https://er-md-hafiz.github.io/api.almalaikasalon/terms.html",
+    val registerDestination: String = "register",
+    val forgotPasswordDestination: String = "forgot_password",
+    val successDestination: String = "home",
+    val phonePlaceholder: String = "Enter 10-digit mobile number",
     val continueAsGuestLabel: String = "Continue as Guest",
     val loginButtonLabel: String = "Sign In"
 )
+
+data class RegisterConfig(
+    val id: String = "register",
+    val enabled: Boolean = true,
+    val title: String = "Create Your Account",
+    val subtitle: String = "Register with your email address.",
+    val showFullName: Boolean = true,
+    val showEmail: Boolean = true,
+    val showPassword: Boolean = true,
+    val showConfirmPassword: Boolean = true,
+    val requireTermsAcceptance: Boolean = true,
+    val sendEmailVerification: Boolean = true,
+    val termsUrl: String = "https://er-md-hafiz.github.io/api.almalaikasalon/terms.html",
+    val privacyPolicyUrl: String = "https://er-md-hafiz.github.io/api.almalaikasalon/privacy.html",
+    val loginDestination: String = "login",
+    val successDestination: String = "home"
+)
+
+data class ForgotPasswordConfig(
+    val id: String = "forgot_password",
+    val enabled: Boolean = true,
+    val title: String = "Reset Your Password",
+    val subtitle: String = "Enter your email address to request a password reset.",
+    val emailRequired: Boolean = true,
+    val loginDestination: String = "login"
+)
+
+data class AuthenticationConfig(
+    val provider: String = "firebase",
+    val emailPasswordEnabled: Boolean = true,
+    val anonymousEnabled: Boolean = true,
+    val phoneAuthEnabled: Boolean = false,
+    val guestAccountLinkingEnabled: Boolean = true,
+    val persistSession: Boolean = true
+)
+
+data class AuthUser(
+    val uid: String,
+    val email: String?,
+    val displayName: String?,
+    val isAnonymous: Boolean,
+    val isEmailVerified: Boolean,
+    val photoUrl: String? = null
+)
+
+data class UserPreferences(
+    val darkMode: Boolean = true,
+    val notifications: Boolean = true
+)
+
+data class UserProfile(
+    val uid: String = "",
+    val displayName: String = "",
+    val email: String = "",
+    val accountType: String = "registered",
+    val createdAt: Long = System.currentTimeMillis(),
+    val updatedAt: Long = System.currentTimeMillis(),
+    val preferences: UserPreferences = UserPreferences()
+)
+
+sealed interface AuthState {
+    data object Initial : AuthState
+    data object Loading : AuthState
+    data class Authenticated(val user: AuthUser, val profile: UserProfile? = null) : AuthState
+    data object Unauthenticated : AuthState
+}
 
 data class NavigationConfig(
     val drawerEnabled: Boolean = true,
