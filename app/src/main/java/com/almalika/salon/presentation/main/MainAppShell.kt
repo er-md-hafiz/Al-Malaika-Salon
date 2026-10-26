@@ -34,6 +34,8 @@ import com.almalika.salon.presentation.home.HomeScreen
 import com.almalika.salon.presentation.home.HomeViewModel
 import com.almalika.salon.presentation.homeservice.HomeServiceScreen
 import com.almalika.salon.presentation.homeservice.HomeServiceViewModel
+import com.almalika.salon.presentation.legal.PrivacyScreen
+import com.almalika.salon.presentation.legal.TermsScreen
 import com.almalika.salon.presentation.locations.LocationsScreen
 import com.almalika.salon.presentation.locations.LocationsViewModel
 import com.almalika.salon.presentation.navigation.IconResolver
@@ -117,6 +119,8 @@ fun MainAppShell(
                     is AppAction.About -> navController.navigate("about") { launchSingleTop = true }
                     is AppAction.Contact -> navController.navigate("contact") { launchSingleTop = true }
                     is AppAction.Settings -> navController.navigate("settings") { launchSingleTop = true }
+                    is AppAction.Terms -> navController.navigate("terms") { launchSingleTop = true }
+                    is AppAction.Privacy -> navController.navigate("privacy") { launchSingleTop = true }
                     else -> ActionExecutor.execute(context, action)
                 }
             }
@@ -264,6 +268,14 @@ fun MainAppShell(
                         composable("settings") {
                             SettingsScreen(master = master, onAction = handleAction)
                         }
+
+                        composable("terms") {
+                            TermsScreen(master = master, onAction = handleAction)
+                        }
+
+                        composable("privacy") {
+                            PrivacyScreen(master = master, onAction = handleAction)
+                        }
                     }
                 }
             }
@@ -283,6 +295,8 @@ fun getScreenTitle(route: String, master: SalonMasterConfig): String {
         "about" -> "About Us"
         "contact" -> "Contact Us"
         "settings" -> "Settings"
+        "terms" -> "Terms & Conditions"
+        "privacy" -> "Privacy Policy"
         else -> master.salon.name
     }
 }

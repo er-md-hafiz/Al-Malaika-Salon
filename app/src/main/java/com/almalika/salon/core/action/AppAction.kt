@@ -22,5 +22,7 @@ sealed interface AppAction {
     data class OpenMap(val queryOrUrl: String, val lat: Double? = null, val lng: Double? = null) : AppAction
     data class ShareApp(val message: String, val url: String) : AppAction
     data object RateApp : AppAction
+    data object Terms : AppAction
+    data object Privacy : AppAction
     data class OpenUrl(val url: String, val title: String = "") : AppAction
 }

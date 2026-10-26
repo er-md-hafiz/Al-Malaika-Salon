@@ -56,26 +56,22 @@ fun SettingsScreen(
             )
         }
 
-        if (master.legal.termsUrl.isNotBlank()) {
-            item {
-                SettingsRow(
-                    title = "Terms & Conditions",
-                    subtitle = "Read salon policies and service terms",
-                    icon = Icons.Default.Description,
-                    onClick = { onAction(AppAction.OpenUrl(master.legal.termsUrl, "Terms & Conditions")) }
-                )
-            }
+        item {
+            SettingsRow(
+                title = "Terms & Conditions",
+                subtitle = "Read salon policies and service terms",
+                icon = Icons.Default.Description,
+                onClick = { onAction(AppAction.Terms) }
+            )
         }
 
-        if (master.legal.privacyUrl.isNotBlank()) {
-            item {
-                SettingsRow(
-                    title = "Privacy Policy",
-                    subtitle = "How we protect and handle client privacy",
-                    icon = Icons.Default.PrivacyTip,
-                    onClick = { onAction(AppAction.OpenUrl(master.legal.privacyUrl, "Privacy Policy")) }
-                )
-            }
+        item {
+            SettingsRow(
+                title = "Privacy Policy",
+                subtitle = "How we protect and handle client privacy",
+                icon = Icons.Default.PrivacyTip,
+                onClick = { onAction(AppAction.Privacy) }
+            )
         }
 
         item {

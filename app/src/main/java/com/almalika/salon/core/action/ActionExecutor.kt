@@ -16,6 +16,7 @@ object ActionExecutor {
                 try {
                     val intent = Intent(Intent.ACTION_DIAL).apply {
                         data = "tel:${action.phoneNumber.trim()}".toUri()
+                        addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
                     }
                     context.startActivity(intent)
                 } catch (e: Exception) {
@@ -31,6 +32,7 @@ object ActionExecutor {
                     }".toUri()
                     val intent = Intent(Intent.ACTION_VIEW, uri).apply {
                         setPackage("com.whatsapp")
+                        addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
                     }
                     context.startActivity(intent)
                 } catch (_: Exception) {
@@ -41,7 +43,9 @@ object ActionExecutor {
                             "https://api.whatsapp.com/send?phone=$formattedNumber&text=${
                                 Uri.encode(action.text)
                             }".toUri()
-                        val fallbackIntent = Intent(Intent.ACTION_VIEW, fallbackUri)
+                        val fallbackIntent = Intent(Intent.ACTION_VIEW, fallbackUri).apply {
+                            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                        }
                         context.startActivity(fallbackIntent)
                     } catch (fallbackEx: Exception) {
                         Toast.makeText(context, "WhatsApp unavailable: ${fallbackEx.message}", Toast.LENGTH_SHORT).show()
@@ -58,7 +62,9 @@ object ActionExecutor {
                     } else {
                         "geo:0,0?q=${Uri.encode(action.queryOrUrl)}".toUri()
                     }
-                    val intent = Intent(Intent.ACTION_VIEW, uri)
+                    val intent = Intent(Intent.ACTION_VIEW, uri).apply {
+                        addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                    }
                     context.startActivity(intent)
                 } catch (e: Exception) {
                     Toast.makeText(context, "Maps unavailable: ${e.message}", Toast.LENGTH_SHORT).show()
@@ -72,7 +78,9 @@ object ActionExecutor {
                         putExtra(Intent.EXTRA_TEXT, "${action.message}\n${action.url}")
                         type = "text/plain"
                     }
-                    val shareIntent = Intent.createChooser(sendIntent, "Share Al-Malaika Salon")
+                    val shareIntent = Intent.createChooser(sendIntent, "Share Al-Malaika Salon").apply {
+                        addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                    }
                     context.startActivity(shareIntent)
                 } catch (e: Exception) {
                     Toast.makeText(context, "Cannot share: ${e.message}", Toast.LENGTH_SHORT).show()
@@ -99,10 +107,18 @@ object ActionExecutor {
 
             is AppAction.OpenUrl -> {
                 try {
-                    val intent = Intent(Intent.ACTION_VIEW, action.url.toUri())
+                    val trimmed = action.url.trim()
+                    val formattedUrl = if (!trimmed.startsWith("http://") && !trimmed.startsWith("https://")) {
+                        "https://$trimmed"
+                    } else {
+                        trimmed
+                    }
+                    val intent = Intent(Intent.ACTION_VIEW, formattedUrl.toUri()).apply {
+                        addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                    }
                     context.startActivity(intent)
                 } catch (e: Exception) {
-                    Toast.makeText(context, "Cannot open URL: ${e.message}", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(context, "Cannot open link: ${e.message}", Toast.LENGTH_SHORT).show()
                 }
             }
 
@@ -115,11 +131,15 @@ object ActionExecutor {
     private fun openPlayStore(context: Context) {
         val packageName = context.packageName
         try {
-            val intent = Intent(Intent.ACTION_VIEW, "market://details?id=$packageName".toUri())
+            val intent = Intent(Intent.ACTION_VIEW, "market://details?id=$packageName".toUri()).apply {
+                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            }
             context.startActivity(intent)
         } catch (_: Exception) {
             val intent = Intent(Intent.ACTION_VIEW,
-                "https://play.google.com/store/apps/details?id=$packageName".toUri())
+                "https://play.google.com/store/apps/details?id=$packageName".toUri()).apply {
+                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            }
             context.startActivity(intent)
         }
     }

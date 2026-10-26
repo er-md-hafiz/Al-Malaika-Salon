@@ -85,6 +85,8 @@ class MainViewModel @Inject constructor(
             is AppAction.ShareApp -> analyticsHelper.logSelectContent("share", "share_app")
             is AppAction.RateApp -> analyticsHelper.logSelectContent("rate", "rate_app")
             is AppAction.OpenMap -> analyticsHelper.logSelectContent("map", "branch_map")
+            is AppAction.Terms -> analyticsHelper.logSelectContent("legal", "terms_and_conditions")
+            is AppAction.Privacy -> analyticsHelper.logSelectContent("legal", "privacy_policy")
             else -> {}
         }
     }
