@@ -14,7 +14,8 @@ import javax.inject.Inject
 @HiltViewModel
 class ServicesViewModel @Inject constructor(
     private val getServicesUseCase: GetServicesUseCase,
-    private val refreshConfigUseCase: RefreshConfigUseCase
+    private val refreshConfigUseCase: RefreshConfigUseCase,
+    private val analyticsHelper: com.almalika.salon.core.analytics.AnalyticsHelper
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow<UiState<List<ServiceCategory>>>(UiState.Loading)
@@ -44,6 +45,7 @@ class ServicesViewModel @Inject constructor(
 
     fun selectCategory(categoryId: String) {
         _selectedCategoryId.value = categoryId
+        analyticsHelper.logSelectContent(contentType = "service_category", itemId = categoryId)
     }
 
     fun refresh() {

@@ -47,7 +47,9 @@ import kotlinx.coroutines.launch
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MainAppShell(
-    viewModel: MainViewModel = hiltViewModel()
+    viewModel: MainViewModel = hiltViewModel(),
+    initialRoute: String? = null,
+    onRouteHandled: () -> Unit = {}
 ) {
     val context = LocalContext.current
     val shellState by viewModel.uiState.collectAsState()
@@ -82,7 +84,28 @@ fun MainAppShell(
             val navBackStackEntry by navController.currentBackStackEntryAsState()
             val currentRoute = navBackStackEntry?.destination?.route ?: "home"
 
+            // Log screen view to Firebase Analytics and Crashlytics whenever route changes
+            LaunchedEffect(currentRoute) {
+                viewModel.logScreen(currentRoute)
+            }
+
+            // Handle FCM notification deep link navigation
+            LaunchedEffect(initialRoute) {
+                if (!initialRoute.isNullOrBlank() && initialRoute != "home") {
+                    try {
+                        navController.navigate(initialRoute) {
+                            launchSingleTop = true
+                        }
+                    } catch (e: Exception) {
+                        viewModel.crashlyticsHelper.recordException(e)
+                    } finally {
+                        onRouteHandled()
+                    }
+                }
+            }
+
             val handleAction: (AppAction) -> Unit = { action ->
+                viewModel.logAction(action)
                 when (action) {
                     is AppAction.Home -> navController.navigate("home") { launchSingleTop = true }
                     is AppAction.Services -> navController.navigate("services") { launchSingleTop = true }
