@@ -138,8 +138,8 @@ dependencies {
     implementation(libs.firebase.crashlytics)
     implementation(libs.firebase.perf)
     implementation(libs.firebase.messaging)
-    implementation(libs.firebase.auth)
-    implementation(libs.firebase.database)
+    implementation("com.google.firebase:firebase-auth")
+    implementation("com.google.firebase:firebase-database")
 
     // Testing
     testImplementation(libs.junit)

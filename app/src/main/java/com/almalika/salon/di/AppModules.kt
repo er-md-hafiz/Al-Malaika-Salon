@@ -89,18 +89,26 @@ object DatabaseModule {
 @InstallIn(SingletonComponent::class)
 object FirebaseModule {
 
+    private const val FIREBASE_RTDB_URL = "https://al-malika-salon-default-rtdb.firebaseio.com/"
+
     @Provides
     @Singleton
     fun provideFirebaseAuth(): com.google.firebase.auth.FirebaseAuth {
         return com.google.firebase.auth.FirebaseAuth.getInstance()
     }
 
-    private const val FIREBASE_RTDB_URL = "https://al-malika-salon-default-rtdb.firebaseio.com/"
-
     @Provides
     @Singleton
     fun provideFirebaseDatabase(): com.google.firebase.database.FirebaseDatabase {
         return com.google.firebase.database.FirebaseDatabase.getInstance(FIREBASE_RTDB_URL)
+    }
+
+    @Provides
+    @Singleton
+    fun provideUsersReference(
+        database: com.google.firebase.database.FirebaseDatabase
+    ): com.google.firebase.database.DatabaseReference {
+        return database.getReference("users")
     }
 }
 
