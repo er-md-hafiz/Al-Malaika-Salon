@@ -19,13 +19,13 @@ if (keystorePropertiesFile.exists()) {
 
 android {
     namespace = "com.almalika.salon"
-    compileSdk = 34
+    compileSdk = 36
 
     defaultConfig {
         applicationId = "com.almalika.salon"
         minSdk = 26
-        targetSdk = 34
-        versionCode = 2
+        targetSdk = 36
+        versionCode = 3
         versionName = "27102026"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
