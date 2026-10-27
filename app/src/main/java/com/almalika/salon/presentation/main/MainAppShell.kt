@@ -102,8 +102,6 @@ fun MainAppShell(
             val authState by authViewModel.authState.collectAsState()
             val sessionState by authViewModel.sessionState.collectAsState()
 
-            val isRegisteredUser = sessionState == UserSessionState.REGISTERED_USER
-            val isAnonymousGuest = sessionState == UserSessionState.ANONYMOUS_GUEST
             val currentAuthUser = (authState as? AuthState.Authenticated)?.user
 
             val activeBottomNav = remember(master.bottomNavigation) {
