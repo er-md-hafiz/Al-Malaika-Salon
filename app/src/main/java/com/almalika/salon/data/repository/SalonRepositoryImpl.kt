@@ -20,7 +20,7 @@ class SalonRepositoryImpl @Inject constructor(
     private val api: SalonApi,
     private val dao: SalonConfigDao,
     private val assetReader: AssetConfigReader,
-    private val moshi: Moshi
+    moshi: Moshi
 ) : SalonRepository {
 
     private val menuAdapter = moshi.adapter(MenuResponseDto::class.java)
@@ -31,7 +31,7 @@ class SalonRepositoryImpl @Inject constructor(
         }
         return try {
             menuAdapter.fromJson(jsonString) ?: parseFallback()
-        } catch (e: Exception) {
+        } catch (_: Exception) {
             parseFallback()
         }
     }
@@ -40,7 +40,7 @@ class SalonRepositoryImpl @Inject constructor(
         return try {
             val fallbackJson = assetReader.readAssetJson("config/menu_fallback.json")
             menuAdapter.fromJson(fallbackJson) ?: MenuResponseDto()
-        } catch (e: Exception) {
+        } catch (_: Exception) {
             MenuResponseDto()
         }
     }
@@ -89,7 +89,7 @@ class SalonRepositoryImpl @Inject constructor(
 
     override fun getBookingConfig(): Flow<BookingConfig> {
         return dao.observeMenu().map { entity ->
-            parseMenu(entity?.json).toBookingConfig()
+            toBookingConfig()
         }
     }
 
@@ -99,10 +99,121 @@ class SalonRepositoryImpl @Inject constructor(
         }
     }
 
+    private var lastRefreshTimestamp: Long = 0L
+
+    companion object {
+        const val PREFERRED_CONFIG_URL = "https://er-md-hafiz.github.io/api.almalaikasalon/menu.json"
+        const val FALLBACK_RAW_GITHUB_URL = "https://raw.githubusercontent.com/er-md-hafiz/api.almalaikasalon/main/menu.json"
+
+        /**
+         * Resolves the configuration URL using remoteConfig.url as source of truth.
+         * Enforces that GitHub blob HTML pages are never used as JSON endpoints.
+         */
+        fun resolveRemoteConfigUrl(configuredUrl: String?): String {
+            val trimmed = configuredUrl?.trim().orEmpty()
+            return when {
+                trimmed.isBlank() -> PREFERRED_CONFIG_URL
+                trimmed.contains("/blob/", ignoreCase = true) && trimmed.contains("github.com", ignoreCase = true) -> {
+                    // Never attempt to parse GitHub HTML web page as JSON; fallback to preferred JSON endpoint
+                    PREFERRED_CONFIG_URL
+                }
+                else -> trimmed
+            }
+        }
+
+        /**
+         * Validates remote JSON content: HTTP body, JSON syntax, schema version, and required sections.
+         */
+        fun validateConfiguration(dto: MenuResponseDto?, rawJson: String): Result<MenuResponseDto> {
+            if (dto == null) {
+                return Result.failure(IllegalStateException("Invalid JSON syntax: deserialized object is null"))
+            }
+
+            val trimmedJson = rawJson.trimStart()
+            if (trimmedJson.startsWith("<!DOCTYPE", ignoreCase = true) ||
+                trimmedJson.startsWith("<html", ignoreCase = true) ||
+                trimmedJson.startsWith("<head", ignoreCase = true)
+            ) {
+                return Result.failure(IllegalStateException("Received HTML document instead of valid JSON configuration"))
+            }
+
+            // Essential schema sections validation
+            val hasRequiredSections = (dto.salon != null || dto.metadata != null) &&
+                    (dto.navigation != null || dto.home != null)
+            if (!hasRequiredSections) {
+                return Result.failure(IllegalStateException("Invalid remote configuration: missing critical schema sections (salon/metadata/navigation)"))
+            }
+
+            // Schema version validation
+            val schemaVer = dto.metadata?.schemaVersion?.trim()
+            if (schemaVer.isNullOrBlank()) {
+                return Result.failure(IllegalStateException("Missing schemaVersion in configuration metadata"))
+            }
+
+            return Result.success(dto)
+        }
+    }
+
     override suspend fun refreshConfig(force: Boolean): Result<Unit> {
         return try {
-            val menuDto = api.getMenuConfig()
-            val json = menuAdapter.toJson(menuDto)
+            val currentMenuEntity = dao.getMenu()
+            val currentConfig = parseMenu(currentMenuEntity?.json)
+            val remoteSettings = currentConfig.remoteConfig
+
+            // Check if remote configuration refresh is enabled
+            if (remoteSettings?.enabled == false && !force) {
+                return Result.success(Unit)
+            }
+
+            // Check refresh interval unless forced
+            val intervalMs = (remoteSettings?.refreshIntervalHours ?: 6) * 3600 * 1000L
+            val now = System.currentTimeMillis()
+            if (!force && lastRefreshTimestamp > 0 && (now - lastRefreshTimestamp) < intervalMs) {
+                return Result.success(Unit)
+            }
+
+            // Determine configured URLs: primary from remoteConfig.url, alternative raw GitHub JSON fallback
+            val primaryUrl = resolveRemoteConfigUrl(remoteSettings?.url)
+            val urlsToTry = if (primaryUrl == FALLBACK_RAW_GITHUB_URL) {
+                listOf(primaryUrl)
+            } else {
+                listOf(primaryUrl, FALLBACK_RAW_GITHUB_URL)
+            }
+
+            var validatedDto: MenuResponseDto? = null
+            var lastException: Exception? = null
+
+            for (targetUrl in urlsToTry) {
+                try {
+                    val response = api.getMenuConfigRaw(targetUrl)
+                    if (!response.isSuccessful) {
+                        throw IllegalStateException("HTTP ${response.code()} error loading configuration from $targetUrl")
+                    }
+                    val bodyString = response.body()?.string()
+                    if (bodyString.isNullOrBlank()) {
+                        throw IllegalStateException("Empty response body received from $targetUrl")
+                    }
+
+                    val parsedDto = menuAdapter.fromJson(bodyString)
+                    val validationResult = validateConfiguration(parsedDto, bodyString)
+                    if (validationResult.isSuccess) {
+                        validatedDto = validationResult.getOrThrow()
+                        break
+                    } else {
+                        throw validationResult.exceptionOrNull() ?: IllegalStateException("Configuration validation failed")
+                    }
+                } catch (e: Exception) {
+                    lastException = e
+                }
+            }
+
+            if (validatedDto == null) {
+                // Keep existing cache (last-known-good) and bundled fallback without crashing
+                return Result.failure(lastException ?: IllegalStateException("Failed to load valid configuration from remote endpoints"))
+            }
+
+            // Cache ONLY successfully validated configuration atomically
+            val json = menuAdapter.toJson(validatedDto)
             val menuEntity = MenuEntity(json = json)
             dao.replaceConfig(
                 menu = menuEntity,
@@ -112,6 +223,7 @@ class SalonRepositoryImpl @Inject constructor(
                 galleryImages = emptyList(),
                 branches = emptyList()
             )
+            lastRefreshTimestamp = now
             Result.success(Unit)
         } catch (e: Exception) {
             // Keep existing cache and do not crash

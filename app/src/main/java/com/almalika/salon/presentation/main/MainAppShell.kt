@@ -1,18 +1,30 @@
 package com.almalika.salon.presentation.main
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.AccountCircle
+import androidx.compose.material.icons.filled.ContentCut
 import androidx.compose.material.icons.filled.Menu
+import androidx.compose.material.icons.filled.Person
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import com.almalika.salon.domain.model.AuthState
+import com.almalika.salon.domain.model.UserSessionState
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.almalika.salon.presentation.profile.ProfileScreen
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
@@ -86,13 +98,56 @@ fun MainAppShell(
         is UiState.Success -> {
             val data = state.data
             val master = data.masterConfig
-            val activeBottomNav = master.bottomNavigation
-                .filter { it.enabled }
-                .sortedBy { it.order }
+            val authViewModel: AuthViewModel = hiltViewModel()
+            val authState by authViewModel.authState.collectAsState()
+            val sessionState by authViewModel.sessionState.collectAsState()
 
-            val activeDrawer = master.drawer
-                .filter { it.enabled }
-                .sortedBy { it.order }
+            val isRegisteredUser = sessionState == UserSessionState.REGISTERED_USER
+            val isAnonymousGuest = sessionState == UserSessionState.ANONYMOUS_GUEST
+            val currentAuthUser = (authState as? AuthState.Authenticated)?.user
+
+            val activeBottomNav = remember(master.bottomNavigation) {
+                master.bottomNavigation
+                    .filter { it.enabled }
+                    .sortedBy { it.order }
+            }
+
+            val activeDrawer = remember(master.drawer, sessionState) {
+                val isAccountItem: (NavItem) -> Boolean = { item ->
+                    item.id in listOf("drawer_account", "account", "login") ||
+                            item.route in listOf("login", "register", "account") ||
+                            item.title.contains("Sign In", ignoreCase = true) ||
+                            item.title.contains("Register", ignoreCase = true)
+                }
+
+                val nonAccountItems = master.drawer.filter { item ->
+                    !isAccountItem(item) && item.enabled
+                }
+
+                val result = nonAccountItems.toMutableList()
+
+                // Runtime authentication-dependent drawer visibility:
+                // Signed out or Anonymous guest -> "Sign In / Register" MUST be visible
+                // Registered user -> "Sign In / Register" MUST be hidden
+                if (sessionState != UserSessionState.REGISTERED_USER) {
+                    val existingAccountItem = master.drawer.firstOrNull { isAccountItem(it) }
+                    val drawerAccountItem = existingAccountItem?.copy(
+                        enabled = true,
+                        title = "Sign In / Register",
+                        route = "login"
+                    ) ?: NavItem(
+                        id = "drawer_account",
+                        title = "Sign In / Register",
+                        icon = "account_circle",
+                        route = "login",
+                        enabled = true,
+                        order = (master.drawer.maxOfOrNull { it.order } ?: 13) + 1
+                    )
+                    result.add(drawerAccountItem)
+                }
+
+                result.sortedBy { it.order }
+            }
 
             val navBackStackEntry by navController.currentBackStackEntryAsState()
             val currentRoute = navBackStackEntry?.destination?.route ?: "splash"
@@ -103,7 +158,7 @@ fun MainAppShell(
                     "splash"
                 } else if (master.onboarding.enabled && !isOnboardingCompleted) {
                     "onboarding"
-                } else if (master.startup.requireLogin || master.login.enabled) {
+                } else if (master.startup.requireLogin && authState !is AuthState.Authenticated) {
                     "login"
                 } else {
                     "home"
@@ -144,6 +199,7 @@ fun MainAppShell(
                     is AppAction.About -> navController.navigate("about") { launchSingleTop = true }
                     is AppAction.Contact -> navController.navigate("contact") { launchSingleTop = true }
                     is AppAction.Settings -> navController.navigate("settings") { launchSingleTop = true }
+                    is AppAction.Profile -> navController.navigate("profile") { launchSingleTop = true }
                     is AppAction.Terms -> navController.navigate("terms") { launchSingleTop = true }
                     is AppAction.Privacy -> navController.navigate("privacy") { launchSingleTop = true }
                     is AppAction.Login -> navController.navigate("login") { launchSingleTop = true }
@@ -158,37 +214,109 @@ fun MainAppShell(
                 drawerState = drawerState,
                 gesturesEnabled = !isRootFlowScreen && master.navigation.drawerEnabled,
                 drawerContent = {
-                    ModalDrawerSheet(modifier = Modifier.width(300.dp)) {
-                        Text(
-                            text = master.salon.name,
-                            style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
-                            modifier = Modifier.padding(16.dp)
-                        )
-                        HorizontalDivider()
-                        Spacer(modifier = Modifier.height(8.dp))
-
-                        activeDrawer.forEach { drawerItem ->
-                            NavigationDrawerItem(
-                                label = { Text(drawerItem.title) },
-                                icon = {
+                    ModalDrawerSheet(
+                        modifier = Modifier
+                            .width(320.dp)
+                            .fillMaxHeight(),
+                        windowInsets = WindowInsets.statusBars
+                    ) {
+                        Column(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .verticalScroll(rememberScrollState())
+                                .navigationBarsPadding()
+                                .padding(bottom = 24.dp)
+                        ) {
+                            // Royal Salon Branding Header
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(horizontal = 20.dp, vertical = 20.dp)
+                            ) {
+                                Box(
+                                    modifier = Modifier
+                                        .size(48.dp)
+                                        .clip(CircleShape)
+                                        .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.15f)),
+                                    contentAlignment = Alignment.Center
+                                ) {
                                     Icon(
-                                        imageVector = IconResolver.resolve(drawerItem.icon),
-                                        contentDescription = drawerItem.title
+                                        imageVector = when (sessionState) {
+                                            UserSessionState.REGISTERED_USER -> Icons.Default.AccountCircle
+                                            UserSessionState.ANONYMOUS_GUEST -> Icons.Default.Person
+                                            UserSessionState.SIGNED_OUT -> Icons.Default.ContentCut
+                                        },
+                                        contentDescription = null,
+                                        tint = MaterialTheme.colorScheme.primary,
+                                        modifier = Modifier.size(24.dp)
                                     )
-                                },
-                                selected = currentRoute == drawerItem.route,
-                                onClick = {
-                                    coroutineScope.launch { drawerState.close() }
-                                    if (drawerItem.route.startsWith("action:")) {
-                                        when (drawerItem.route) {
-                                            "action:share" -> handleAction(AppAction.ShareApp(master.share.message, master.share.playStoreUrl))
-                                            "action:rate" -> handleAction(AppAction.RateApp)
-                                        }
-                                    } else {
-                                        navController.navigate(drawerItem.route) { launchSingleTop = true }
+                                }
+                                Spacer(modifier = Modifier.width(14.dp))
+                                Column {
+                                    val titleText = when (sessionState) {
+                                        UserSessionState.REGISTERED_USER -> currentAuthUser?.displayName?.ifBlank { "Registered Member" } ?: "Registered Member"
+                                        UserSessionState.ANONYMOUS_GUEST -> "Guest User"
+                                        UserSessionState.SIGNED_OUT -> master.salon.name.ifBlank { "Al-Malaika Salon" }
                                     }
-                                },
-                                modifier = Modifier.padding(NavigationDrawerItemDefaults.ItemPadding)
+                                    val subtitleText = when (sessionState) {
+                                        UserSessionState.REGISTERED_USER -> currentAuthUser?.email?.ifBlank { "Active Member Account" } ?: "Active Member Account"
+                                        UserSessionState.ANONYMOUS_GUEST -> "Guest"
+                                        UserSessionState.SIGNED_OUT -> "No authenticated user"
+                                    }
+                                    Text(
+                                        text = titleText,
+                                        style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
+                                        color = MaterialTheme.colorScheme.onSurface,
+                                        maxLines = 1,
+                                        overflow = TextOverflow.Ellipsis
+                                    )
+                                    Text(
+                                        text = subtitleText,
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                        maxLines = 1,
+                                        overflow = TextOverflow.Ellipsis
+                                    )
+                                }
+                            }
+
+                            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f))
+                            Spacer(modifier = Modifier.height(8.dp))
+
+                            activeDrawer.forEach { drawerItem ->
+                                NavigationDrawerItem(
+                                    label = { Text(drawerItem.title) },
+                                    icon = {
+                                        Icon(
+                                            imageVector = IconResolver.resolve(drawerItem.icon),
+                                            contentDescription = drawerItem.title
+                                        )
+                                    },
+                                    selected = currentRoute == drawerItem.route,
+                                    onClick = {
+                                        coroutineScope.launch { drawerState.close() }
+                                        if (drawerItem.route.startsWith("action:")) {
+                                            when (drawerItem.route) {
+                                                "action:share" -> handleAction(AppAction.ShareApp(master.share.message, master.share.playStoreUrl))
+                                                "action:rate" -> handleAction(AppAction.RateApp)
+                                            }
+                                        } else {
+                                            navController.navigate(drawerItem.route) { launchSingleTop = true }
+                                        }
+                                    },
+                                    modifier = Modifier.padding(NavigationDrawerItemDefaults.ItemPadding)
+                                )
+                            }
+
+                            Spacer(modifier = Modifier.height(16.dp))
+                            HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp), color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f))
+                            Spacer(modifier = Modifier.height(12.dp))
+                            Text(
+                                text = "v${master.profile?.appVersion.orEmpty().ifBlank { "1.0.0" }} • Al-Malaika Salon",
+                                style = MaterialTheme.typography.labelSmall,
+                                color = MaterialTheme.colorScheme.outline,
+                                modifier = Modifier.padding(horizontal = 24.dp)
                             )
                         }
                     }
@@ -218,11 +346,12 @@ fun MainAppShell(
                         if (!isRootFlowScreen && master.navigation.bottomNavigationEnabled && activeBottomNav.isNotEmpty()) {
                             NavigationBar {
                                 activeBottomNav.forEach { navItem ->
-                                    val isSelected = currentRoute == navItem.route
+                                    val isSelected = currentRoute == navItem.route || (navItem.route == "profile" && currentRoute in listOf("profile", "settings", "account"))
+                                    val iconToUse = if (isSelected && navItem.selectedIcon.isNotBlank()) navItem.selectedIcon else navItem.icon
                                     NavigationBarItem(
                                         icon = {
                                             Icon(
-                                                imageVector = IconResolver.resolve(navItem.icon),
+                                                imageVector = IconResolver.resolve(iconToUse),
                                                 contentDescription = navItem.title
                                             )
                                         },
@@ -254,7 +383,7 @@ fun MainAppShell(
                                 onFinish = {
                                     val nextRoute = when {
                                         master.onboarding.enabled && !isOnboardingCompleted -> "onboarding"
-                                        master.startup.requireLogin || master.login.enabled -> "login"
+                                        master.startup.requireLogin && authState !is AuthState.Authenticated -> "login"
                                         else -> "home"
                                     }
                                     navController.navigate(nextRoute) {
@@ -269,7 +398,7 @@ fun MainAppShell(
                                 config = master.onboarding,
                                 onComplete = {
                                     viewModel.completeOnboarding()
-                                    val nextRoute = if (master.startup.requireLogin || master.login.enabled) "login" else "home"
+                                    val nextRoute = if (master.startup.requireLogin && authState !is AuthState.Authenticated) "login" else "home"
                                     navController.navigate(nextRoute) {
                                         popUpTo("onboarding") { inclusive = true }
                                     }
@@ -341,7 +470,14 @@ fun MainAppShell(
                             AccountScreen(
                                 master = master,
                                 viewModel = authVm,
-                                onAction = handleAction
+                                onAction = handleAction,
+                                onSignedOut = {
+                                    authViewModel.clearAllActionStates()
+                                    navController.navigate("home") {
+                                        popUpTo(0) { inclusive = true }
+                                        launchSingleTop = true
+                                    }
+                                }
                             )
                         }
 
@@ -359,6 +495,16 @@ fun MainAppShell(
                         }
 
                         composable("services") {
+                            val servicesVm: ServicesViewModel = hiltViewModel()
+                            ServicesScreen(viewModel = servicesVm, onAction = handleAction)
+                        }
+
+                        composable("price_list") {
+                            val servicesVm: ServicesViewModel = hiltViewModel()
+                            ServicesScreen(viewModel = servicesVm, onAction = handleAction)
+                        }
+
+                        composable("prices") {
                             val servicesVm: ServicesViewModel = hiltViewModel()
                             ServicesScreen(viewModel = servicesVm, onAction = handleAction)
                         }
@@ -401,14 +547,41 @@ fun MainAppShell(
                             ContactScreen(master = master, onAction = handleAction)
                         }
 
+                        composable("profile") {
+                            val userDarkMode by viewModel.isDarkMode.collectAsState()
+                            val currentIsDark = userDarkMode ?: (master.theme.themeMode.lowercase() != "light")
+                            ProfileScreen(
+                                master = master,
+                                authViewModel = authViewModel,
+                                isDarkMode = currentIsDark,
+                                onToggleDarkMode = { viewModel.setDarkMode(it) },
+                                onAction = handleAction,
+                                onSignedOut = {
+                                    authViewModel.clearAllActionStates()
+                                    navController.navigate("home") {
+                                        popUpTo(0) { inclusive = true }
+                                        launchSingleTop = true
+                                    }
+                                }
+                            )
+                        }
+
                         composable("settings") {
                             val userDarkMode by viewModel.isDarkMode.collectAsState()
                             val currentIsDark = userDarkMode ?: (master.theme.themeMode.lowercase() != "light")
-                            SettingsScreen(
+                            ProfileScreen(
                                 master = master,
-                                onAction = handleAction,
+                                authViewModel = authViewModel,
                                 isDarkMode = currentIsDark,
-                                onToggleDarkMode = { viewModel.setDarkMode(it) }
+                                onToggleDarkMode = { viewModel.setDarkMode(it) },
+                                onAction = handleAction,
+                                onSignedOut = {
+                                    authViewModel.clearAllActionStates()
+                                    navController.navigate("home") {
+                                        popUpTo(0) { inclusive = true }
+                                        launchSingleTop = true
+                                    }
+                                }
                             )
                         }
 
@@ -430,6 +603,7 @@ fun getScreenTitle(route: String, master: SalonMasterConfig): String {
     return when (route) {
         "home" -> master.salon.name.ifBlank { "Al-Malaika Salon" }
         "services" -> "Our Services"
+        "price_list", "prices" -> "Price List"
         "offers" -> "Exclusive Offers"
         "reviews" -> "Client Reviews"
         "gallery" -> "Salon Gallery"
@@ -438,6 +612,7 @@ fun getScreenTitle(route: String, master: SalonMasterConfig): String {
         "home_service" -> "Home Service"
         "about" -> "About Us"
         "contact" -> "Contact Us"
+        "profile" -> "Profile & Settings"
         "settings" -> "Settings"
         "terms" -> "Terms & Conditions"
         "privacy" -> "Privacy Policy"

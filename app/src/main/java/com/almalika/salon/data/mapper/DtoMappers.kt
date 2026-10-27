@@ -142,8 +142,8 @@ fun RegisterConfigDto.toDomain(): RegisterConfig {
         subtitle = subtitle?.ifBlank { "Register with your email address." } ?: "Register with your email address.",
         showFullName = showFullName ?: true,
         showEmail = showEmail ?: true,
-        showPassword = showPassword ?: true,
-        showConfirmPassword = showConfirmPassword ?: true,
+        showPassword = true,
+        showConfirmPassword = true,
         requireTermsAcceptance = requireTermsAcceptance ?: true,
         sendEmailVerification = sendEmailVerification ?: true,
         termsUrl = termsUrl?.ifBlank { "https://er-md-hafiz.github.io/api.almalaikasalon/terms.html" } ?: "https://er-md-hafiz.github.io/api.almalaikasalon/terms.html",
@@ -178,9 +178,11 @@ fun AuthenticationConfigDto.toDomain(): AuthenticationConfig {
 fun NavDestinationDto.toDomain(): NavItem {
     val rawRoute = route?.ifBlank { null } ?: destination?.ifBlank { null } ?: id.orEmpty()
     val normalizedRoute = when (rawRoute.lowercase().trim()) {
-        "price_list", "prices" -> "services"
+        "price_list" -> "price_list"
+        "prices" -> "price_list"
         "location" -> "locations"
         "franchise" -> "about"
+        "service" -> "services"
         else -> rawRoute
     }
     return NavItem(
@@ -189,16 +191,26 @@ fun NavDestinationDto.toDomain(): NavItem {
         icon = icon.orEmpty(),
         route = normalizedRoute,
         enabled = enabled ?: true,
-        order = order ?: 0
+        order = order ?: 0,
+        selectedIcon = selectedIcon?.ifBlank { null } ?: icon.orEmpty()
     )
 }
 
 fun NavigationConfigDto.toDomain(): NavigationConfig {
+    val rawBottom = bottomItems?.map { it.toDomain() } ?: emptyList()
+    val filteredBottom = rawBottom.filter { item ->
+        val routeLower = item.route.lowercase().trim()
+        val idLower = item.id.lowercase().trim()
+        routeLower !in listOf("price_list", "prices", "gallery", "contact") &&
+        idLower !in listOf("bottom_prices", "bottom_gallery", "bottom_contact")
+    }
+
     return NavigationConfig(
         drawerEnabled = drawerEnabled ?: true,
         bottomNavigationEnabled = bottomNavigationEnabled ?: true,
+        bottomNavigationMaxItems = bottomNavigationMaxItems ?: 5,
         drawerItems = drawerItems?.map { it.toDomain() }?.sortedBy { it.order } ?: emptyList(),
-        bottomItems = bottomItems?.map { it.toDomain() }?.sortedBy { it.order } ?: emptyList()
+        bottomItems = filteredBottom.sortedBy { it.order }
     )
 }
 
@@ -238,22 +250,42 @@ fun MenuResponseDto.toDomain(): SalonMasterConfig {
         aboutText = salonDetail?.about?.trim().orEmpty()
     )
 
-    val bottomNav = if (navConfig.bottomItems.isNotEmpty()) {
-        navConfig.bottomItems
-    } else {
+    val bottomNav = navConfig.bottomItems.ifEmpty {
         listOf(
-            NavItem("home", "Home", "home", "home", true, 1),
-            NavItem("services", "Services", "content_cut", "services", true, 2),
-            NavItem("offers", "Offers", "local_offer", "offers", !offers.isNullOrEmpty(), 3),
-            NavItem("booking", "Booking", "calendar_month", "booking", true, 4),
-            NavItem("locations", "Locations", "place", "locations", true, 5)
+            NavItem("bottom_home", "Home", "home", "home", true, 1, "home_filled"),
+            NavItem(
+                "bottom_services",
+                "Service",
+                "content_cut",
+                "services",
+                true,
+                2,
+                "content_cut"
+            ),
+            NavItem("bottom_offers", "Offers", "local_offer", "offers", true, 3, "local_offer"),
+            NavItem(
+                "bottom_booking",
+                "Booking",
+                "calendar_month",
+                "booking",
+                true,
+                4,
+                "calendar_month"
+            ),
+            NavItem(
+                "bottom_profile",
+                "Profile",
+                "account_circle",
+                "profile",
+                true,
+                5,
+                "account_circle"
+            )
         )
     }
 
     // Build drawer dynamically from navigation.drawerItems or fallback to profile.menuItems
-    val drawerItems = if (navConfig.drawerItems.isNotEmpty()) {
-        navConfig.drawerItems
-    } else {
+    val drawerItems = navConfig.drawerItems.ifEmpty {
         val items = mutableListOf<NavItem>()
         var drawerOrder = 1
         items.add(NavItem("home", "Home", "home", "home", true, drawerOrder++))
@@ -261,12 +293,39 @@ fun MenuResponseDto.toDomain(): SalonMasterConfig {
         if (!offers.isNullOrEmpty()) {
             items.add(NavItem("offers", "Offers", "local_offer", "offers", true, drawerOrder++))
         }
-        items.add(NavItem("booking", "Book Appointment", "calendar_month", "booking", true, drawerOrder++))
+        items.add(
+            NavItem(
+                "booking",
+                "Book Appointment",
+                "calendar_month",
+                "booking",
+                true,
+                drawerOrder++
+            )
+        )
         if (homeServiceBooking?.enabled == true) {
-            items.add(NavItem("home_service", "Home Service", "home_repair_service", "home_service", true, drawerOrder++))
+            items.add(
+                NavItem(
+                    "home_service",
+                    "Home Service",
+                    "home_repair_service",
+                    "home_service",
+                    true,
+                    drawerOrder++
+                )
+            )
         }
         if (!galleryItems.isNullOrEmpty()) {
-            items.add(NavItem("gallery", "Gallery", "photo_library", "gallery", true, drawerOrder++))
+            items.add(
+                NavItem(
+                    "gallery",
+                    "Gallery",
+                    "photo_library",
+                    "gallery",
+                    true,
+                    drawerOrder++
+                )
+            )
         }
         items.add(NavItem("locations", "Locations", "place", "locations", true, drawerOrder++))
         items.add(NavItem("about", "About Us", "info", "about", true, drawerOrder++))
@@ -274,7 +333,16 @@ fun MenuResponseDto.toDomain(): SalonMasterConfig {
         items.add(NavItem("settings", "Settings", "settings", "settings", true, drawerOrder++))
         items.add(NavItem("share", "Share App", "share", "action:share", true, drawerOrder++))
         items.add(NavItem("rate", "Rate Us", "star", "action:rate", true, drawerOrder++))
-        items.add(NavItem("terms", "Terms & Conditions", "description", "terms", true, drawerOrder++))
+        items.add(
+            NavItem(
+                "terms",
+                "Terms & Conditions",
+                "description",
+                "terms",
+                true,
+                drawerOrder++
+            )
+        )
         items.add(NavItem("privacy", "Privacy Policy", "privacy_tip", "privacy", true, drawerOrder))
         items
     }
@@ -344,7 +412,26 @@ fun MenuResponseDto.toDomain(): SalonMasterConfig {
         forgotPassword = forgotPassword?.toDomain() ?: ForgotPasswordConfig(),
         authentication = authentication?.toDomain() ?: AuthenticationConfig(),
         navigation = navConfig,
-        theme = theme?.toDomain() ?: ThemeConfig()
+        theme = theme?.toDomain() ?: ThemeConfig(),
+        remoteConfig = remoteConfig?.toDomain() ?: RemoteConfig()
+    )
+}
+
+fun RemoteConfigDto.toDomain(): RemoteConfig {
+    return RemoteConfig(
+        url = url?.trim().orEmpty().ifBlank { "https://er-md-hafiz.github.io/api.almalaikasalon/menu.json" },
+        enabled = enabled ?: true,
+        refreshOnLaunch = refreshOnLaunch ?: true,
+        refreshIntervalHours = refreshIntervalHours ?: 6,
+        connectTimeoutSeconds = connectTimeoutSeconds ?: 10,
+        readTimeoutSeconds = readTimeoutSeconds ?: 15,
+        useBundledFallback = useBundledFallback ?: true,
+        useLastKnownGoodConfigOffline = useLastKnownGoodConfigOffline ?: true,
+        cacheOnlyValidatedConfig = cacheOnlyValidatedConfig ?: true,
+        applyUpdatesAtomically = applyUpdatesAtomically ?: true,
+        checkSchemaVersion = checkSchemaVersion ?: true,
+        allowUnknownFields = allowUnknownFields ?: true,
+        allowArbitraryCode = allowArbitraryCode ?: false
     )
 }
 
@@ -359,10 +446,38 @@ fun MenuResponseDto.toHomeConfig(): HomeConfig {
         aboutText = salon?.about?.trim().orEmpty()
     )
 
+    val isHomeBannersFeatureEnabled = featureFlags?.get("homeBanners") ?: true
+
+    val domainBanners: List<HomeBanner> = banners
+        ?.filter { it.isAvailable ?: true }
+        ?.filter { !it.imageUrl.isNullOrBlank() }
+        ?.mapIndexed { index, b ->
+            val bannerId = when (val id = b.id) {
+                is Number -> if (id.toDouble() == id.toLong().toDouble()) id.toLong().toString() else id.toString()
+                is String -> id.ifBlank { "banner_$index" }
+                else -> id?.toString().orEmpty().ifBlank { "banner_$index" }
+            }
+            HomeBanner(
+                id = bannerId,
+                imageUrl = b.imageUrl.orEmpty(),
+                title = b.title.orEmpty(),
+                subtitle = b.subtitle.orEmpty(),
+                category = b.category.orEmpty(),
+                serviceType = b.serviceType.orEmpty(),
+                isAvailable = b.isAvailable ?: true,
+                actionRoute = b.action?.destination?.ifBlank { null }
+                    ?: if (b.category.equals("SERVICES", ignoreCase = true)) "services" else ""
+            )
+        } ?: emptyList()
+
     val configuredHomeSections = home?.sections
     if (!configuredHomeSections.isNullOrEmpty()) {
         val mappedSections = configuredHomeSections
-            .filter { it.enabled ?: true }
+            .filter { s ->
+                val baseEnabled = s.enabled ?: true
+                val isBannerSec = s.id == "home_banners" || s.dataSource == "banners" || s.type.equals("banner_carousel", ignoreCase = true)
+                if (isBannerSec) baseEnabled && isHomeBannersFeatureEnabled else baseEnabled
+            }
             .sortedBy { it.order ?: 0 }
             .map { s ->
                 val sectionType = when (s.type?.lowercase()?.trim()) {
@@ -393,18 +508,26 @@ fun MenuResponseDto.toHomeConfig(): HomeConfig {
                     else -> rawRoute
                 }
 
+                val isBannerSec = sectionType == SectionType.HERO || s.id == "home_banners" || s.dataSource == "banners"
+                val resolvedBanners = if (isBannerSec) domainBanners else emptyList()
+                val resolvedImage = s.imageUrl?.ifBlank { null }
+                    ?: if (isBannerSec) resolvedBanners.firstOrNull()?.imageUrl.orEmpty() else ""
+                val defaultActionRoute = if (isBannerSec && normalizedRoute.isBlank()) "services" else normalizedRoute
+
                 HomeSection(
                     id = s.id ?: "sec_${sectionType.name.lowercase()}",
                     type = sectionType,
-                    title = s.title.orEmpty(),
+                    title = s.title.orEmpty().ifBlank { if (isBannerSec) "Featured" else "" },
                     subtitle = s.subtitle.orEmpty(),
-                    imageUrl = s.imageUrl.orEmpty(),
-                    actionText = s.actionText.orEmpty(),
-                    actionRoute = normalizedRoute,
+                    imageUrl = resolvedImage,
+                    actionText = s.actionText.orEmpty().ifBlank { if (isBannerSec) "Services" else "" },
+                    actionRoute = defaultActionRoute,
                     sourceUrl = s.sourceUrl.orEmpty(),
                     itemsToShow = s.itemsToShow ?: s.maxItems ?: 6,
                     enabled = s.enabled ?: true,
-                    order = s.order ?: 0
+                    order = s.order ?: 0,
+                    banners = resolvedBanners,
+                    autoSlideIntervalMs = s.autoSlideIntervalMs ?: 4000L
                 )
             }
         return HomeConfig(salon = salonInfo, sections = mappedSections)
@@ -413,22 +536,24 @@ fun MenuResponseDto.toHomeConfig(): HomeConfig {
     val sections = mutableListOf<HomeSection>()
     var order = 1
 
-    // 1. Hero Banner
-    if (!banners.isNullOrEmpty()) {
-        val hero = banners.first()
+    // 1. Hero Banner / Carousel fallback
+    if (domainBanners.isNotEmpty()) {
+        val hero = domainBanners.first()
         sections.add(
             HomeSection(
-                id = "sec_hero",
+                id = "home_banners",
                 type = SectionType.HERO,
-                title = hero.title.orEmpty(),
-                subtitle = hero.subtitle.orEmpty(),
-                imageUrl = hero.imageUrl.orEmpty(),
-                actionText = "Book Appointment",
-                actionRoute = "booking",
+                title = hero.title.ifBlank { "Featured" },
+                subtitle = hero.subtitle,
+                imageUrl = hero.imageUrl,
+                actionText = "Services",
+                actionRoute = "services",
                 sourceUrl = "",
-                itemsToShow = 1,
-                enabled = true,
-                order = order++
+                itemsToShow = domainBanners.size,
+                enabled = isHomeBannersFeatureEnabled,
+                order = order++,
+                banners = domainBanners,
+                autoSlideIntervalMs = 4000L
             )
         )
     }
@@ -784,7 +909,7 @@ fun MenuResponseDto.toBranches(): List<Branch> {
     )
 }
 
-fun MenuResponseDto.toBookingConfig(): BookingConfig {
+fun toBookingConfig(): BookingConfig {
     return BookingConfig(
         title = "Book Salon Appointment",
         subtitle = "Select your desired styling service and preferred schedule",

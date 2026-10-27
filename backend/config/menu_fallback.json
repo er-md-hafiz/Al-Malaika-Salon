@@ -121,30 +121,74 @@
   "navigation": {
     "drawerEnabled": true,
     "bottomNavigationEnabled": true,
+    "bottomNavigationMaxItems": 5,
     "drawerItems": [
-      { "id": "home", "title": "Home", "icon": "home", "route": "home", "enabled": true, "order": 1 },
-      { "id": "services", "title": "Services", "icon": "content_cut", "route": "services", "enabled": true, "order": 2 },
-      { "id": "offers", "title": "Offers", "icon": "local_offer", "route": "offers", "enabled": true, "order": 3 },
-      { "id": "reviews", "title": "Reviews", "icon": "rate_review", "route": "reviews", "enabled": true, "order": 4 },
-      { "id": "booking", "title": "Book Appointment", "icon": "calendar_month", "route": "booking", "enabled": true, "order": 5 },
-      { "id": "home_service", "title": "Home Service", "icon": "home_repair_service", "route": "home_service", "enabled": false, "order": 6 },
-      { "id": "gallery", "title": "Gallery", "icon": "photo_library", "route": "gallery", "enabled": true, "order": 7 },
-      { "id": "locations", "title": "Locations", "icon": "place", "route": "locations", "enabled": true, "order": 8 },
-      { "id": "about", "title": "About Us", "icon": "info", "route": "about", "enabled": true, "order": 9 },
-      { "id": "contact", "title": "Contact Us", "icon": "call", "route": "contact", "enabled": true, "order": 10 },
-      { "id": "settings", "title": "Settings", "icon": "settings", "route": "settings", "enabled": true, "order": 11 },
-      { "id": "account", "title": "My Account", "icon": "face", "route": "account", "enabled": true, "order": 12 },
-      { "id": "share", "title": "Share App", "icon": "share", "route": "action:share", "enabled": true, "order": 13 },
-      { "id": "rate", "title": "Rate Us", "icon": "star", "route": "action:rate", "enabled": true, "order": 14 },
-      { "id": "terms", "title": "Terms & Conditions", "icon": "description", "route": "terms", "enabled": true, "order": 15 },
-      { "id": "privacy", "title": "Privacy Policy", "icon": "privacy_tip", "route": "privacy", "enabled": true, "order": 16 }
+      { "id": "drawer_home", "title": "Home", "icon": "home", "type": "navigate", "destination": "home", "enabled": true, "order": 1 },
+      { "id": "drawer_services", "title": "Services", "icon": "content_cut", "type": "navigate", "destination": "services", "enabled": true, "order": 2 },
+      { "id": "drawer_prices", "title": "Price List", "icon": "currency_rupee", "type": "navigate", "destination": "price_list", "enabled": true, "order": 3 },
+      { "id": "drawer_gallery", "title": "Gallery", "icon": "photo_library", "type": "navigate", "destination": "gallery", "enabled": true, "order": 4 },
+      { "id": "drawer_offers", "title": "Offers", "icon": "local_offer", "type": "navigate", "destination": "offers", "enabled": true, "order": 5 },
+      { "id": "drawer_reviews", "title": "Reviews", "icon": "star", "type": "navigate", "destination": "reviews", "enabled": true, "order": 6 },
+      { "id": "drawer_location", "title": "Location", "icon": "location_on", "type": "navigate", "destination": "location", "enabled": true, "order": 7 },
+      { "id": "drawer_contact", "title": "Contact Us", "icon": "call", "type": "navigate", "destination": "contact", "enabled": true, "order": 8 },
+      { "id": "drawer_franchise", "title": "Franchise", "icon": "store", "type": "navigate", "destination": "franchise", "enabled": true, "order": 9 },
+      { "id": "drawer_settings", "title": "Settings", "icon": "settings", "type": "navigate", "destination": "settings", "enabled": true, "order": 10 },
+      { "id": "drawer_about", "title": "About Us", "icon": "info", "type": "navigate", "destination": "about", "enabled": true, "order": 11 },
+      { "id": "drawer_privacy", "title": "Privacy Policy", "icon": "privacy_tip", "type": "navigate", "destination": "privacy", "enabled": true, "order": 12 },
+      { "id": "drawer_terms", "title": "Terms & Conditions", "icon": "description", "type": "navigate", "destination": "terms", "enabled": true, "order": 13 },
+      { "id": "drawer_account", "title": "Sign In / Register", "icon": "account_circle", "type": "navigate", "destination": "login", "enabled": true, "order": 14 }
     ],
     "bottomItems": [
-      { "id": "home", "title": "Home", "icon": "home", "route": "home", "enabled": true, "order": 1 },
-      { "id": "services", "title": "Services", "icon": "content_cut", "route": "services", "enabled": true, "order": 2 },
-      { "id": "offers", "title": "Offers", "icon": "local_offer", "route": "offers", "enabled": true, "order": 3 },
-      { "id": "booking", "title": "Booking", "icon": "calendar_month", "route": "booking", "enabled": true, "order": 4 },
-      { "id": "locations", "title": "Locations", "icon": "place", "route": "locations", "enabled": true, "order": 5 }
+      {
+        "id": "bottom_home",
+        "title": "Home",
+        "icon": "home",
+        "selectedIcon": "home_filled",
+        "type": "navigate",
+        "destination": "home",
+        "enabled": true,
+        "order": 1
+      },
+      {
+        "id": "bottom_services",
+        "title": "Service",
+        "icon": "content_cut",
+        "selectedIcon": "content_cut",
+        "type": "navigate",
+        "destination": "services",
+        "enabled": true,
+        "order": 2
+      },
+      {
+        "id": "bottom_offers",
+        "title": "Offers",
+        "icon": "local_offer",
+        "selectedIcon": "local_offer",
+        "type": "navigate",
+        "destination": "offers",
+        "enabled": true,
+        "order": 3
+      },
+      {
+        "id": "bottom_booking",
+        "title": "Booking",
+        "icon": "calendar_month",
+        "selectedIcon": "calendar_month",
+        "type": "navigate",
+        "destination": "booking",
+        "enabled": true,
+        "order": 4
+      },
+      {
+        "id": "bottom_profile",
+        "title": "Profile",
+        "icon": "account_circle",
+        "selectedIcon": "account_circle",
+        "type": "navigate",
+        "destination": "profile",
+        "enabled": true,
+        "order": 5
+      }
     ]
   },
   "theme": {
@@ -159,7 +203,7 @@
     "enabled": true,
     "screenTitle": "Al-Malaika Salon",
     "sections": [
-      { "id": "sec_hero", "type": "hero", "title": "Royal Grooming Experience", "subtitle": "Haircuts • Beard • Styling", "enabled": true, "order": 1, "actionRoute": "booking", "actionText": "Book Appointment" },
+      { "id": "home_banners", "type": "banner_carousel", "title": "Featured", "enabled": true, "order": 1, "dataSource": "banners", "itemAction": { "type": "navigate", "destination": "services" } },
       { "id": "sec_quick_actions", "type": "quick_actions", "title": "Quick Actions", "enabled": true, "order": 2 },
       { "id": "sec_services", "type": "services", "title": "Popular Services", "subtitle": "Precision grooming and styling", "enabled": true, "order": 3, "actionRoute": "services", "actionText": "View All Services" },
       { "id": "sec_banner", "type": "banner", "title": "Signature Beard Styling", "subtitle": "Sharp lines. Confident looks.", "enabled": true, "order": 4 },
@@ -170,6 +214,7 @@
     ]
   },
   "featureFlags": {
+    "homeBanners": true,
     "booking": true,
     "homeService": false,
     "offers": false,

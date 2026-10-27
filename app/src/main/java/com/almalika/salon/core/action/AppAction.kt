@@ -12,6 +12,7 @@ sealed interface AppAction {
     data object About : AppAction
     data object Contact : AppAction
     data object Settings : AppAction
+    data object Profile : AppAction
 
     data class SelectService(val serviceId: String) : AppAction
     data class SelectOffer(val offerId: String) : AppAction

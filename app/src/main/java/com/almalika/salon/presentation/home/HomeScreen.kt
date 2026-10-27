@@ -100,7 +100,10 @@ fun DynamicSectionRenderer(
 ) {
     when (section.type) {
         SectionType.HERO -> {
-            HeroBannerSection(section = section, onAction = onAction)
+            val isHomeBannersEnabled = master.featureFlags["homeBanners"] ?: true
+            if (isHomeBannersEnabled && section.enabled) {
+                HeroBannerSection(section = section, onAction = onAction)
+            }
         }
 
         SectionType.QUICK_ACTIONS -> {

@@ -27,6 +27,7 @@ fun AccountScreen(
     master: SalonMasterConfig,
     viewModel: AuthViewModel,
     onAction: (AppAction) -> Unit,
+    onSignedOut: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     val authState by viewModel.authState.collectAsState()
@@ -42,7 +43,9 @@ fun AccountScreen(
                 Button(
                     onClick = {
                         showSignOutDialog = false
-                        viewModel.signOut()
+                        viewModel.signOut {
+                            onSignedOut()
+                        }
                     },
                     colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)
                 ) {

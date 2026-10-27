@@ -84,7 +84,7 @@ class FirebaseAnalyticsHelper @Inject constructor(
             route?.let { putString("target_route", sanitize(it, 64)) }
             notificationId?.let { putString("notification_id", sanitize(it, 64)) }
         }
-        firebaseAnalytics.logEvent("notification_open", bundle)
+        firebaseAnalytics.logEvent("app_notification_open", bundle)
     }
 
     override fun logApiError(endpoint: String, httpCode: Int?, errorType: String?) {

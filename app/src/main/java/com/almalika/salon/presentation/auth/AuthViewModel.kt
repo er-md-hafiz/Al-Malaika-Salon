@@ -13,6 +13,10 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
+import com.almalika.salon.domain.model.UserSessionState
+import com.almalika.salon.domain.model.sessionState
+import kotlinx.coroutines.flow.map
+
 sealed interface AuthActionState {
     data object Idle : AuthActionState
     data object Loading : AuthActionState
@@ -26,7 +30,19 @@ class AuthViewModel @Inject constructor(
 ) : ViewModel() {
 
     val authState: StateFlow<AuthState> = authRepository.authState
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), AuthState.Initial)
+        .stateIn(
+            viewModelScope,
+            SharingStarted.Eagerly,
+            authRepository.currentUser?.let { AuthState.Authenticated(it) } ?: AuthState.Unauthenticated
+        )
+
+    val sessionState: StateFlow<UserSessionState> = authState
+        .map { it.sessionState }
+        .stateIn(
+            viewModelScope,
+            SharingStarted.Eagerly,
+            authRepository.currentUser?.sessionState ?: UserSessionState.SIGNED_OUT
+        )
 
     private val _loginState = MutableStateFlow<AuthActionState>(AuthActionState.Idle)
     val loginState: StateFlow<AuthActionState> = _loginState.asStateFlow()
@@ -241,6 +257,13 @@ class AuthViewModel @Inject constructor(
     }
 
     fun clearAccountActionState() {
+        _accountActionState.value = AuthActionState.Idle
+    }
+
+    fun clearAllActionStates() {
+        _loginState.value = AuthActionState.Idle
+        _registerState.value = AuthActionState.Idle
+        _forgotPasswordState.value = AuthActionState.Idle
         _accountActionState.value = AuthActionState.Idle
     }
 }

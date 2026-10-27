@@ -10,7 +10,9 @@ import com.google.firebase.auth.*
 import com.google.firebase.database.FirebaseDatabase
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.callbackFlow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.tasks.await
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -21,26 +23,52 @@ class AuthRepositoryImpl @Inject constructor(
     private val firebaseDatabase: FirebaseDatabase
 ) : AuthRepository {
 
+    private val localGuestFlow = MutableStateFlow<AuthUser?>(null)
+
     override val currentUser: AuthUser?
-        get() = firebaseAuth.currentUser?.toDomain()
+        get() = firebaseAuth.currentUser?.toDomain() ?: localGuestFlow.value
 
-    override val authState: Flow<AuthState> = callbackFlow {
-        trySend(AuthState.Loading)
-
-        val listener = FirebaseAuth.AuthStateListener { auth ->
-            val firebaseUser = auth.currentUser
-            if (firebaseUser == null) {
-                trySend(AuthState.Unauthenticated)
+    override val authState: Flow<AuthState> = combine(
+        callbackFlow {
+            val initialUser = firebaseAuth.currentUser
+            if (initialUser != null) {
+                trySend(AuthState.Authenticated(initialUser.toDomain(), null))
             } else {
-                val domainUser = firebaseUser.toDomain()
-                trySend(AuthState.Authenticated(domainUser, null))
+                trySend(AuthState.Unauthenticated)
             }
-        }
 
-        firebaseAuth.addAuthStateListener(listener)
+            val listener = FirebaseAuth.AuthStateListener { auth ->
+                val firebaseUser = auth.currentUser
+                if (firebaseUser == null) {
+                    trySend(AuthState.Unauthenticated)
+                } else {
+                    val domainUser = firebaseUser.toDomain()
+                    trySend(AuthState.Authenticated(domainUser, null))
+                }
+            }
 
-        awaitClose {
-            firebaseAuth.removeAuthStateListener(listener)
+            firebaseAuth.addAuthStateListener(listener)
+
+            awaitClose {
+                firebaseAuth.removeAuthStateListener(listener)
+            }
+        },
+        localGuestFlow
+    ) { firebaseState, localGuest ->
+        if (firebaseState is AuthState.Authenticated) {
+            firebaseState
+        } else if (localGuest != null) {
+            AuthState.Authenticated(
+                user = localGuest,
+                profile = UserProfile(
+                    uid = localGuest.uid,
+                    displayName = "Guest User",
+                    email = "",
+                    accountType = "anonymous"
+                )
+            )
+        } else {
+            firebaseState
         }
     }
 
@@ -55,6 +83,7 @@ class AuthRepositoryImpl @Inject constructor(
             val user = authResult.user?.toDomain()
                 ?: return Result.failure(IllegalStateException("Sign in failed: user not returned"))
 
+            localGuestFlow.value = null
             Result.success(user)
         } catch (e: Exception) {
             Result.failure(mapAuthException(e))
@@ -119,6 +148,7 @@ class AuthRepositoryImpl @Inject constructor(
             )
             saveUserProfile(profile)
 
+            localGuestFlow.value = null
             Result.success(domainUser)
         } catch (e: Exception) {
             Result.failure(mapAuthException(e))
@@ -131,6 +161,7 @@ class AuthRepositoryImpl @Inject constructor(
             val firebaseUser = authResult.user
                 ?: return Result.failure(IllegalStateException("Guest login failed"))
 
+            localGuestFlow.value = null
             val domainUser = firebaseUser.toDomain()
 
             // Record initial guest profile in Realtime Database
@@ -146,7 +177,26 @@ class AuthRepositoryImpl @Inject constructor(
 
             Result.success(domainUser)
         } catch (e: Exception) {
-            Result.failure(mapAuthException(e))
+            val msg = e.message.orEmpty()
+            val isRestricted = msg.contains("restricted to administrators", ignoreCase = true) ||
+                    msg.contains("ADMIN_ONLY_OPERATION", ignoreCase = true) ||
+                    (e is FirebaseAuthException && (e.errorCode == "ERROR_ADMIN_RESTRICTED_OPERATION" || e.errorCode == "admin-restricted-operation"))
+
+            if (isRestricted) {
+                // Graceful fallback: Anonymous provider is not yet enabled in Firebase Console.
+                // Enable local guest browsing session so the user can immediately browse the salon app.
+                val localGuest = AuthUser(
+                    uid = "guest_local_${System.currentTimeMillis()}",
+                    email = null,
+                    displayName = "Guest User",
+                    isAnonymous = true,
+                    isEmailVerified = false
+                )
+                localGuestFlow.value = localGuest
+                Result.success(localGuest)
+            } else {
+                Result.failure(mapAuthException(e))
+            }
         }
     }
 
@@ -158,13 +208,21 @@ class AuthRepositoryImpl @Inject constructor(
     ): Result<AuthUser> {
         return try {
             val user = firebaseAuth.currentUser
-                ?: return registerWithEmail(fullName, email, password, sendVerification)
+            if (user == null || localGuestFlow.value != null) {
+                localGuestFlow.value = null
+                return registerWithEmail(fullName, email, password, sendVerification)
+            }
 
             val trimmedName = fullName.trim()
             val trimmedEmail = email.trim()
             val credential = EmailAuthProvider.getCredential(trimmedEmail, password)
 
-            val linkResult = user.linkWithCredential(credential).await()
+            val linkResult = try {
+                user.linkWithCredential(credential).await()
+            } catch (collision: FirebaseAuthUserCollisionException) {
+                // Email belongs to an existing account. Preserve guest data and advise user to sign in.
+                return Result.failure(Exception("An account with this email address already exists. Please sign in instead.", collision))
+            }
             val linkedUser = linkResult.user
                 ?: return Result.failure(IllegalStateException("Account linking failed"))
 
@@ -225,6 +283,7 @@ class AuthRepositoryImpl @Inject constructor(
 
     override suspend fun signOut(): Result<Unit> {
         return try {
+            localGuestFlow.value = null
             firebaseAuth.signOut()
             Result.success(Unit)
         } catch (e: Exception) {
@@ -233,6 +292,16 @@ class AuthRepositoryImpl @Inject constructor(
     }
 
     override suspend fun getUserProfile(uid: String): Result<UserProfile?> {
+        if (uid.startsWith("guest_local_")) {
+            return Result.success(
+                UserProfile(
+                    uid = uid,
+                    displayName = "Guest User",
+                    email = "",
+                    accountType = "anonymous"
+                )
+            )
+        }
         return try {
             val userRef = firebaseDatabase.reference.child("users").child(uid)
             val profileSnapshot = userRef.child("profile").get().await()
@@ -274,6 +343,9 @@ class AuthRepositoryImpl @Inject constructor(
     }
 
     override suspend fun saveUserProfile(profile: UserProfile): Result<Unit> {
+        if (profile.uid.startsWith("guest_local_")) {
+            return Result.success(Unit)
+        }
         return try {
             val userRef = firebaseDatabase.reference.child("users").child(profile.uid)
             val profileMap = mapOf(
@@ -299,6 +371,9 @@ class AuthRepositoryImpl @Inject constructor(
     }
 
     override suspend fun getUserPreferences(uid: String): Result<com.almalika.salon.domain.model.UserPreferences> {
+        if (uid.startsWith("guest_local_")) {
+            return Result.success(com.almalika.salon.domain.model.UserPreferences())
+        }
         return try {
             val snapshot = firebaseDatabase.reference
                 .child("users")
@@ -320,6 +395,9 @@ class AuthRepositoryImpl @Inject constructor(
     }
 
     override suspend fun saveUserPreferences(uid: String, preferences: com.almalika.salon.domain.model.UserPreferences): Result<Unit> {
+        if (uid.startsWith("guest_local_")) {
+            return Result.success(Unit)
+        }
         return try {
             val prefMap = mapOf(
                 "darkMode" to preferences.darkMode,
@@ -359,9 +437,22 @@ class AuthRepositoryImpl @Inject constructor(
 
             val firebaseUser = if (currentUser?.isAnonymous == true) {
                 val credential = EmailAuthProvider.getCredentialWithLink(trimmedEmail, emailLink)
-                val linkResult = currentUser.linkWithCredential(credential).await()
-                linkResult.user ?: throw IllegalStateException("Email link credential linking failed")
+                try {
+                    val linkResult = currentUser.linkWithCredential(credential).await()
+                    linkResult.user ?: throw IllegalStateException("Email link credential linking failed")
+                } catch (collision: FirebaseAuthUserCollisionException) {
+                    val guestPreferences = getUserPreferences(currentUser.uid).getOrNull()
+                    val authResult = firebaseAuth.signInWithEmailLink(trimmedEmail, emailLink).await()
+                    val existingUser = authResult.user ?: throw IllegalStateException("Email link sign in failed")
+                    if (guestPreferences != null) {
+                        try {
+                            saveUserPreferences(existingUser.uid, guestPreferences)
+                        } catch (_: Exception) {}
+                    }
+                    existingUser
+                }
             } else {
+                localGuestFlow.value = null
                 val authResult = firebaseAuth.signInWithEmailLink(trimmedEmail, emailLink).await()
                 authResult.user ?: throw IllegalStateException("Email link sign in failed")
             }
@@ -401,19 +492,23 @@ class AuthRepositoryImpl @Inject constructor(
     }
 
     private fun mapAuthException(e: Exception): Exception {
-        val userFriendlyMessage = when (e) {
-            is FirebaseAuthInvalidUserException ->
+        val userFriendlyMessage = when {
+            e is FirebaseAuthInvalidUserException ->
                 "No account exists with this email address."
-            is FirebaseAuthInvalidCredentialsException ->
+            e is FirebaseAuthInvalidCredentialsException ->
                 "Invalid credentials. Please check your email and password."
-            is FirebaseAuthUserCollisionException ->
+            e is FirebaseAuthUserCollisionException ->
                 "An account with this email address already exists. Please sign in instead."
-            is FirebaseAuthWeakPasswordException ->
+            e is FirebaseAuthWeakPasswordException ->
                 "The password is too weak. Please use at least 6 characters."
-            is FirebaseNetworkException ->
+            e is FirebaseNetworkException ->
                 "Network connection failed. Please check your internet connection."
-            is FirebaseTooManyRequestsException ->
+            e is FirebaseTooManyRequestsException ->
                 "Too many attempts. Access is temporarily disabled. Please try again later."
+            e is FirebaseAuthException && (e.errorCode == "ERROR_ADMIN_RESTRICTED_OPERATION" || e.errorCode == "admin-restricted-operation") ->
+                "Anonymous sign-in is disabled in your Firebase Console. Please enable 'Anonymous' in Firebase Authentication > Sign-in method, or sign up with email."
+            e.message?.contains("restricted to administrators", ignoreCase = true) == true ->
+                "Anonymous sign-in is disabled in your Firebase Console. Please enable 'Anonymous' in Firebase Authentication > Sign-in method, or sign up with email."
             else ->
                 e.message?.takeIf { it.isNotBlank() } ?: "Authentication error. Please try again."
         }

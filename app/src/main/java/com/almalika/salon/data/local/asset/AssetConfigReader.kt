@@ -7,16 +7,25 @@ import javax.inject.Inject
 import javax.inject.Singleton
 
 @Singleton
-class AssetConfigReader @Inject constructor(
-    @ApplicationContext private val context: Context
-) {
-    fun readAssetJson(fileName: String): String {
+open class AssetConfigReader {
+    private val context: Context?
+
+    @Inject
+    constructor(@ApplicationContext context: Context) {
+        this.context = context
+    }
+
+    constructor() {
+        this.context = null
+    }
+
+    open fun readAssetJson(fileName: String): String {
         return try {
-            context.assets.open(fileName).use { inputStream ->
+            context?.assets?.open(fileName)?.use { inputStream ->
                 InputStreamReader(inputStream).use { reader ->
                     reader.readText()
                 }
-            }
+            } ?: "{}"
         } catch (e: Exception) {
             "{}"
         }

@@ -1,11 +1,18 @@
 package com.almalika.salon.presentation.home.components
 
+import android.os.SystemClock
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.animation.core.tween
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -13,92 +20,283 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
 import coil.compose.AsyncImage
+import coil.request.CachePolicy
+import coil.request.ImageRequest
 import com.almalika.salon.core.action.AppAction
+import com.almalika.salon.domain.model.HomeBanner
 import com.almalika.salon.domain.model.HomeSection
 import com.almalika.salon.domain.model.SalonMasterConfig
 import com.almalika.salon.presentation.theme.GoldPrimary
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.isActive
+import kotlinx.coroutines.launch
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun HeroBannerSection(
     section: HomeSection,
     onAction: (AppAction) -> Unit
 ) {
-    Card(
+    val eligibleBanners = remember(section.banners, section.imageUrl) {
+        val list = section.banners.filter { it.isAvailable && it.imageUrl.isNotBlank() }
+        if (list.isNotEmpty()) {
+            list
+        } else if (section.imageUrl.isNotBlank()) {
+            listOf(
+                HomeBanner(
+                    id = "fallback",
+                    imageUrl = section.imageUrl,
+                    title = section.title.ifBlank { "Royal Grooming Experience" },
+                    subtitle = section.subtitle,
+                    actionRoute = section.actionRoute.ifBlank { "services" }
+                )
+            )
+        } else {
+            emptyList()
+        }
+    }
+
+    if (eligibleBanners.isEmpty()) {
+        return
+    }
+
+    val bannerCount = eligibleBanners.size
+    val isLooping = bannerCount > 1
+    val virtualPageCount = if (isLooping) bannerCount * 1000 else 1
+    val initialPage = if (isLooping) (virtualPageCount / 2) - ((virtualPageCount / 2) % bannerCount) else 0
+
+    val pagerState = rememberPagerState(
+        initialPage = initialPage,
+        pageCount = { virtualPageCount }
+    )
+    val coroutineScope = rememberCoroutineScope()
+
+    // Lifecycle observer to pause auto-advancement when paused/backgrounded
+    val lifecycleOwner = LocalLifecycleOwner.current
+    var isResumed by remember { mutableStateOf(true) }
+
+    DisposableEffect(lifecycleOwner) {
+        val observer = LifecycleEventObserver { _, event ->
+            isResumed = (event == Lifecycle.Event.ON_RESUME)
+        }
+        lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose {
+            lifecycleOwner.lifecycle.removeObserver(observer)
+        }
+    }
+
+    val autoSlideIntervalMs = if (section.autoSlideIntervalMs > 0L) section.autoSlideIntervalMs else 4000L
+
+    // Safe auto-advance loop every 4s
+    LaunchedEffect(pagerState, bannerCount, isResumed, autoSlideIntervalMs) {
+        if (bannerCount > 1 && isResumed) {
+            while (isActive) {
+                delay(autoSlideIntervalMs)
+                if (isResumed && !pagerState.isScrollInProgress) {
+                    pagerState.animateScrollToPage(
+                        page = pagerState.currentPage + 1,
+                        animationSpec = tween(durationMillis = 650, easing = FastOutSlowInEasing)
+                    )
+                }
+            }
+        }
+    }
+
+    // Debounced banner tap handler to prevent duplicate navigation
+    var lastClickTime by remember { mutableLongStateOf(0L) }
+    val onBannerClick: (HomeBanner) -> Unit = { banner ->
+        val now = SystemClock.elapsedRealtime()
+        if (now - lastClickTime >= 500L) {
+            lastClickTime = now
+            val targetRoute = if (banner.actionRoute.isNotBlank()) {
+                banner.actionRoute
+            } else {
+                section.actionRoute.ifBlank { "services" }
+            }
+            val appAction = when (targetRoute.lowercase().trim()) {
+                "services" -> AppAction.Services
+                "offers" -> AppAction.Offers
+                "booking" -> AppAction.Booking
+                "gallery" -> AppAction.Gallery
+                "locations", "location" -> AppAction.Locations
+                "about" -> AppAction.About
+                "contact" -> AppAction.Contact
+                "profile" -> AppAction.Profile
+                "settings" -> AppAction.Settings
+                "reviews" -> AppAction.Reviews
+                else -> AppAction.Services
+            }
+            onAction(appAction)
+        }
+    }
+
+    Box(
         modifier = Modifier
             .fillMaxWidth()
-            .height(230.dp)
-            .padding(horizontal = 16.dp, vertical = 8.dp),
+            .padding(horizontal = 16.dp, vertical = 8.dp)
+    ) {
+        HorizontalPager(
+            state = pagerState,
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(220.dp)
+                .clip(RoundedCornerShape(20.dp)),
+            key = { page ->
+                val actualIndex = page % bannerCount
+                eligibleBanners[actualIndex].id.ifBlank { page.toString() }
+            }
+        ) { page ->
+            val banner = eligibleBanners[page % bannerCount]
+            BannerItemCard(
+                banner = banner,
+                onClick = { onBannerClick(banner) }
+            )
+        }
+
+        // Indicators for multi-banner carousels
+        if (bannerCount > 1) {
+            Row(
+                modifier = Modifier
+                    .align(Alignment.BottomEnd)
+                    .padding(end = 20.dp, bottom = 16.dp),
+                horizontalArrangement = Arrangement.spacedBy(6.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                val activeIndex = pagerState.currentPage % bannerCount
+                repeat(bannerCount) { index ->
+                    val isSelected = activeIndex == index
+                    val width by animateDpAsState(
+                        targetValue = if (isSelected) 22.dp else 6.dp,
+                        animationSpec = tween(durationMillis = 300),
+                        label = "indicator_width"
+                    )
+                    Box(
+                        modifier = Modifier
+                            .height(6.dp)
+                            .width(width)
+                            .clip(CircleShape)
+                            .background(
+                                if (isSelected) GoldPrimary else Color.White.copy(alpha = 0.45f)
+                            )
+                            .clickable {
+                                coroutineScope.launch {
+                                    val current = pagerState.currentPage
+                                    val mod = current % bannerCount
+                                    pagerState.animateScrollToPage(current + (index - mod))
+                                }
+                            }
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun BannerItemCard(
+    banner: HomeBanner,
+    onClick: () -> Unit
+) {
+    val context = LocalContext.current
+    Card(
+        modifier = Modifier
+            .fillMaxSize()
+            .clickable(onClick = onClick),
         shape = RoundedCornerShape(20.dp),
+        colors = CardDefaults.cardColors(containerColor = Color(0xFF18181B)),
         elevation = CardDefaults.cardElevation(defaultElevation = 6.dp)
     ) {
         Box(modifier = Modifier.fillMaxSize()) {
             AsyncImage(
-                model = section.imageUrl,
-                contentDescription = section.title,
+                model = ImageRequest.Builder(context)
+                    .data(banner.imageUrl)
+                    .crossfade(true)
+                    .diskCachePolicy(CachePolicy.ENABLED)
+                    .memoryCachePolicy(CachePolicy.ENABLED)
+                    .build(),
+                contentDescription = banner.title.ifBlank { "Salon Banner" },
                 modifier = Modifier.fillMaxSize(),
                 contentScale = ContentScale.Crop
             )
 
+            // Scrim gradient for optimal legibility
             Box(
                 modifier = Modifier
                     .fillMaxSize()
                     .background(
                         Brush.verticalGradient(
-                            colors = listOf(Color.Transparent, Color.Black.copy(alpha = 0.85f)),
-                            startY = 60f
+                            colors = listOf(
+                                Color.Transparent,
+                                Color.Black.copy(alpha = 0.45f),
+                                Color.Black.copy(alpha = 0.88f)
+                            ),
+                            startY = 40f
                         )
                     )
             )
 
+            // Category tag
+            if (banner.category.isNotBlank()) {
+                Surface(
+                    modifier = Modifier
+                        .padding(start = 16.dp, top = 16.dp)
+                        .align(Alignment.TopStart),
+                    shape = RoundedCornerShape(12.dp),
+                    color = GoldPrimary.copy(alpha = 0.92f),
+                    contentColor = Color.Black
+                ) {
+                    Text(
+                        text = banner.category.uppercase(),
+                        style = MaterialTheme.typography.labelSmall.copy(
+                            fontWeight = FontWeight.Bold,
+                            letterSpacing = 1.sp
+                        ),
+                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                    )
+                }
+            }
+
+            // Title and Subtitle positioned safely away from bottom-right indicators
             Column(
                 modifier = Modifier
                     .align(Alignment.BottomStart)
-                    .padding(16.dp)
+                    .padding(start = 16.dp, bottom = 16.dp, end = 90.dp)
             ) {
                 Text(
-                    text = section.title,
-                    style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold),
-                    color = Color.White
+                    text = banner.title,
+                    style = MaterialTheme.typography.titleLarge.copy(
+                        fontWeight = FontWeight.Bold,
+                        lineHeight = 24.sp
+                    ),
+                    color = Color.White,
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis
                 )
-                if (section.subtitle.isNotBlank()) {
+                if (banner.subtitle.isNotBlank()) {
+                    Spacer(modifier = Modifier.height(4.dp))
                     Text(
-                        text = section.subtitle,
+                        text = banner.subtitle,
                         style = MaterialTheme.typography.bodyMedium,
-                        color = Color.White.copy(alpha = 0.85f)
+                        color = Color.White.copy(alpha = 0.85f),
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
                     )
-                }
-                Spacer(modifier = Modifier.height(10.dp))
-                if (section.actionText.isNotBlank()) {
-                    Button(
-                        onClick = { onAction(AppAction.Booking) },
-                        colors = ButtonDefaults.buttonColors(containerColor = GoldPrimary),
-                        shape = RoundedCornerShape(20.dp),
-                        contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp)
-                    ) {
-                        Text(
-                            text = section.actionText,
-                            style = MaterialTheme.typography.labelLarge,
-                            color = Color.Black
-                        )
-                        Spacer(modifier = Modifier.width(6.dp))
-                        Icon(
-                            imageVector = Icons.AutoMirrored.Filled.ArrowForward,
-                            contentDescription = null,
-                            modifier = Modifier.size(16.dp),
-                            tint = Color.Black
-                        )
-                    }
                 }
             }
         }

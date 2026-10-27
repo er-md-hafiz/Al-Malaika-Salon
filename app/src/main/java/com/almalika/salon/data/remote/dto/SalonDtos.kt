@@ -30,7 +30,25 @@ data class MenuResponseDto(
     @Json(name = "navigation") val navigation: NavigationConfigDto? = null,
     @Json(name = "home") val home: HomeScreenConfigDto? = null,
     @Json(name = "theme") val theme: ThemeConfigDto? = null,
-    @Json(name = "featureFlags") val featureFlags: Map<String, Boolean>? = null
+    @Json(name = "featureFlags") val featureFlags: Map<String, Boolean>? = null,
+    @Json(name = "remoteConfig") val remoteConfig: RemoteConfigDto? = null
+)
+
+@JsonClass(generateAdapter = true)
+data class RemoteConfigDto(
+    @Json(name = "url") val url: String? = null,
+    @Json(name = "enabled") val enabled: Boolean? = true,
+    @Json(name = "refreshOnLaunch") val refreshOnLaunch: Boolean? = true,
+    @Json(name = "refreshIntervalHours") val refreshIntervalHours: Int? = 6,
+    @Json(name = "connectTimeoutSeconds") val connectTimeoutSeconds: Int? = 10,
+    @Json(name = "readTimeoutSeconds") val readTimeoutSeconds: Int? = 15,
+    @Json(name = "useBundledFallback") val useBundledFallback: Boolean? = true,
+    @Json(name = "useLastKnownGoodConfigOffline") val useLastKnownGoodConfigOffline: Boolean? = true,
+    @Json(name = "cacheOnlyValidatedConfig") val cacheOnlyValidatedConfig: Boolean? = true,
+    @Json(name = "applyUpdatesAtomically") val applyUpdatesAtomically: Boolean? = true,
+    @Json(name = "checkSchemaVersion") val checkSchemaVersion: Boolean? = true,
+    @Json(name = "allowUnknownFields") val allowUnknownFields: Boolean? = true,
+    @Json(name = "allowArbitraryCode") val allowArbitraryCode: Boolean? = false
 )
 
 @JsonClass(generateAdapter = true)
@@ -183,6 +201,7 @@ data class AuthenticationConfigDto(
 data class NavigationConfigDto(
     @Json(name = "drawerEnabled") val drawerEnabled: Boolean? = true,
     @Json(name = "bottomNavigationEnabled") val bottomNavigationEnabled: Boolean? = true,
+    @Json(name = "bottomNavigationMaxItems") val bottomNavigationMaxItems: Int? = 5,
     @Json(name = "drawerItems") val drawerItems: List<NavDestinationDto>? = null,
     @Json(name = "bottomItems") val bottomItems: List<NavDestinationDto>? = null
 )
@@ -230,6 +249,7 @@ data class HomeSectionConfigDto(
     @Json(name = "viewAllDestination") val viewAllDestination: String? = null,
     @Json(name = "action") val action: HomeSectionActionDto? = null,
     @Json(name = "itemAction") val itemAction: HomeSectionActionDto? = null,
+    @Json(name = "autoSlideIntervalMs") val autoSlideIntervalMs: Long? = 4000L,
     @Json(name = "enabled") val enabled: Boolean? = true,
     @Json(name = "order") val order: Int? = 0
 )
@@ -279,7 +299,8 @@ data class BannerDto(
     @Json(name = "subtitle") val subtitle: String? = null,
     @Json(name = "category") val category: String? = null,
     @Json(name = "serviceType") val serviceType: String? = null,
-    @Json(name = "isAvailable") val isAvailable: Boolean? = true
+    @Json(name = "isAvailable") val isAvailable: Boolean? = true,
+    @Json(name = "action") val action: HomeSectionActionDto? = null
 )
 
 @JsonClass(generateAdapter = true)

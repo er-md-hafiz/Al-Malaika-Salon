@@ -25,7 +25,7 @@ object IconResolver {
             "dark_mode" -> Icons.Default.DarkMode
             "notifications" -> Icons.Default.Notifications
             "health_and_safety" -> Icons.Default.HealthAndSafety
-            "currency_rupee" -> Icons.Default.CurrencyRupee
+            "currency_rupee", "payments" -> Icons.Default.CurrencyRupee
             "workspace_premium" -> Icons.Default.WorkspacePremium
             "face" -> Icons.Default.Face
             "brush" -> Icons.Default.Brush
@@ -33,7 +33,7 @@ object IconResolver {
             "palette" -> Icons.Default.Palette
             "spa" -> Icons.Default.Spa
             "child_care" -> Icons.Default.ChildCare
-            "account", "profile", "person", "user" -> Icons.Default.AccountCircle
+            "account", "account_circle", "profile", "person", "user" -> Icons.Default.AccountCircle
             "store", "storefront" -> Icons.Default.Storefront
             else -> Icons.Default.Circle
         }

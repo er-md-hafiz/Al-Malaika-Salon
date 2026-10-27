@@ -21,7 +21,24 @@ data class SalonMasterConfig(
     val forgotPassword: ForgotPasswordConfig = ForgotPasswordConfig(),
     val authentication: AuthenticationConfig = AuthenticationConfig(),
     val navigation: NavigationConfig = NavigationConfig(),
-    val theme: ThemeConfig = ThemeConfig()
+    val theme: ThemeConfig = ThemeConfig(),
+    val remoteConfig: RemoteConfig = RemoteConfig()
+)
+
+data class RemoteConfig(
+    val url: String = "https://er-md-hafiz.github.io/api.almalaikasalon/menu.json",
+    val enabled: Boolean = true,
+    val refreshOnLaunch: Boolean = true,
+    val refreshIntervalHours: Int = 6,
+    val connectTimeoutSeconds: Int = 10,
+    val readTimeoutSeconds: Int = 15,
+    val useBundledFallback: Boolean = true,
+    val useLastKnownGoodConfigOffline: Boolean = true,
+    val cacheOnlyValidatedConfig: Boolean = true,
+    val applyUpdatesAtomically: Boolean = true,
+    val checkSchemaVersion: Boolean = true,
+    val allowUnknownFields: Boolean = true,
+    val allowArbitraryCode: Boolean = false
 )
 
 data class ThemeConfig(
@@ -138,9 +155,9 @@ data class AuthenticationConfig(
 data class AuthUser(
     val uid: String,
     val email: String?,
-    val displayName: String?,
-    val isAnonymous: Boolean,
-    val isEmailVerified: Boolean,
+    val displayName: String? = null,
+    val isAnonymous: Boolean = false,
+    val isEmailVerified: Boolean = false,
     val photoUrl: String? = null
 )
 
@@ -159,6 +176,12 @@ data class UserProfile(
     val preferences: UserPreferences = UserPreferences()
 )
 
+enum class UserSessionState {
+    SIGNED_OUT,
+    ANONYMOUS_GUEST,
+    REGISTERED_USER
+}
+
 sealed interface AuthState {
     data object Initial : AuthState
     data object Loading : AuthState
@@ -166,9 +189,28 @@ sealed interface AuthState {
     data object Unauthenticated : AuthState
 }
 
+val AuthState.sessionState: UserSessionState
+    get() = when (this) {
+        is AuthState.Authenticated -> if (user.isAnonymous) UserSessionState.ANONYMOUS_GUEST else UserSessionState.REGISTERED_USER
+        else -> UserSessionState.SIGNED_OUT
+    }
+
+val AuthState.isRegisteredUser: Boolean
+    get() = this is AuthState.Authenticated && !this.user.isAnonymous
+
+val AuthState.isAnonymousGuest: Boolean
+    get() = this is AuthState.Authenticated && this.user.isAnonymous
+
+val AuthState.isSignedOut: Boolean
+    get() = this !is AuthState.Authenticated
+
+val AuthUser.sessionState: UserSessionState
+    get() = if (isAnonymous) UserSessionState.ANONYMOUS_GUEST else UserSessionState.REGISTERED_USER
+
 data class NavigationConfig(
     val drawerEnabled: Boolean = true,
     val bottomNavigationEnabled: Boolean = true,
+    val bottomNavigationMaxItems: Int = 5,
     val drawerItems: List<NavItem> = emptyList(),
     val bottomItems: List<NavItem> = emptyList()
 )
@@ -189,7 +231,8 @@ data class NavItem(
     val icon: String,
     val route: String,
     val enabled: Boolean,
-    val order: Int
+    val order: Int,
+    val selectedIcon: String = icon
 )
 
 data class WhatsAppConfig(
@@ -276,6 +319,17 @@ enum class SectionType {
     UNKNOWN
 }
 
+data class HomeBanner(
+    val id: String = "",
+    val imageUrl: String = "",
+    val title: String = "",
+    val subtitle: String = "",
+    val category: String = "",
+    val serviceType: String = "",
+    val isAvailable: Boolean = true,
+    val actionRoute: String = ""
+)
+
 data class HomeSection(
     val id: String,
     val type: SectionType,
@@ -287,7 +341,9 @@ data class HomeSection(
     val sourceUrl: String,
     val itemsToShow: Int,
     val enabled: Boolean,
-    val order: Int
+    val order: Int,
+    val banners: List<HomeBanner> = emptyList(),
+    val autoSlideIntervalMs: Long = 4000L
 )
 
 data class ServiceCategory(

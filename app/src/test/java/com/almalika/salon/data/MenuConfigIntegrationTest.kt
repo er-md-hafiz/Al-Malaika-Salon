@@ -156,7 +156,7 @@ class MenuConfigIntegrationTest {
         assertEquals(false, homeBookingConfig.enabled)
         assertEquals("Home service is currently paused.", homeBookingConfig.bookingMessage)
 
-        val salonBookingConfig = dto.toBookingConfig()
+        val salonBookingConfig = toBookingConfig()
         assertEquals(true, salonBookingConfig.enabled)
         assertTrue(salonBookingConfig.fields.isNotEmpty())
 
@@ -443,7 +443,11 @@ class MenuConfigIntegrationTest {
               { "id": "drawer_franchise", "title": "Franchise", "icon": "store", "type": "navigate", "destination": "franchise" }
             ],
             "bottomItems": [
-              { "id": "bottom_prices", "title": "Prices", "icon": "currency_rupee", "destination": "price_list" }
+              { "id": "bottom_home", "title": "Home", "icon": "home", "selectedIcon": "home_filled", "destination": "home", "order": 1 },
+              { "id": "bottom_services", "title": "Service", "icon": "content_cut", "selectedIcon": "content_cut", "destination": "services", "order": 2 },
+              { "id": "bottom_offers", "title": "Offers", "icon": "local_offer", "selectedIcon": "local_offer", "destination": "offers", "order": 3 },
+              { "id": "bottom_booking", "title": "Booking", "icon": "calendar_month", "selectedIcon": "calendar_month", "destination": "booking", "order": 4 },
+              { "id": "bottom_profile", "title": "Profile", "icon": "account_circle", "selectedIcon": "account_circle", "destination": "profile", "order": 5 }
             ]
           },
           "onboarding": {
@@ -487,7 +491,7 @@ class MenuConfigIntegrationTest {
         // Navigation drawer routes should be normalized
         val drawerPrices = master.drawer.find { it.id == "drawer_prices" }
         assertNotNull(drawerPrices)
-        assertEquals("services", drawerPrices!!.route)
+        assertEquals("price_list", drawerPrices!!.route)
 
         val drawerLocation = master.drawer.find { it.id == "drawer_location" }
         assertNotNull(drawerLocation)
@@ -497,8 +501,13 @@ class MenuConfigIntegrationTest {
         assertNotNull(drawerFranchise)
         assertEquals("about", drawerFranchise!!.route)
 
-        // Bottom nav
-        assertEquals("services", master.bottomNavigation.first().route)
+        // Bottom nav: Exactly 5 items in order
+        assertEquals(5, master.bottomNavigation.size)
+        assertEquals("home", master.bottomNavigation[0].route)
+        assertEquals("services", master.bottomNavigation[1].route)
+        assertEquals("offers", master.bottomNavigation[2].route)
+        assertEquals("booking", master.bottomNavigation[3].route)
+        assertEquals("profile", master.bottomNavigation[4].route)
 
         // Onboarding
         assertEquals(true, master.onboarding.showSkip)

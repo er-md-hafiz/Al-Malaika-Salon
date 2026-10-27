@@ -96,10 +96,15 @@ class AuthValidationAndConfigTest {
         assertTrue(master.authentication.guestAccountLinkingEnabled)
         assertTrue(master.authentication.persistSession)
 
-        // 5. Drawer contains Account screen
-        val accountDrawerItem = master.drawer.find { it.id == "drawer_account" || it.route == "account" }
+        // 5. Drawer contains Account / Sign In screen
+        val accountDrawerItem = master.drawer.find { it.id == "drawer_account" || it.route == "account" || it.route == "login" }
         assertNotNull("Drawer should contain Account item", accountDrawerItem)
-        assertEquals("My Account", accountDrawerItem?.title)
+        assertTrue(accountDrawerItem?.title in listOf("Sign In / Register", "My Account"))
+
+        // 6. Bottom navigation contains Profile and excludes Contact
+        val bottomRoutes = master.bottomNavigation.map { it.route }
+        assertTrue("Bottom navigation must include profile", bottomRoutes.contains("profile"))
+        assertFalse("Bottom navigation must not include contact", bottomRoutes.contains("contact"))
     }
 
     @Test
@@ -208,6 +213,30 @@ class AuthValidationAndConfigTest {
         assertEquals("customer@example.com", profile?.email)
         assertEquals("email_link", profile?.accountType)
         assertTrue(profile?.preferences?.darkMode == true)
+    }
+
+    @Test
+    fun `test register config enforces password and confirm password fields are true even when remote specifies false`() {
+        // Given a remote DTO where showPassword and showConfirmPassword are false
+        val remoteDto = com.almalika.salon.data.remote.dto.RegisterConfigDto(
+            id = "register",
+            enabled = true,
+            title = "Create Your Account",
+            showFullName = true,
+            showEmail = true,
+            showPassword = false,
+            showConfirmPassword = false,
+            requireTermsAcceptance = true
+        )
+
+        // When mapped to domain
+        val domain = remoteDto.toDomain()
+
+        // Then password fields are enforced as true so user can enter password and register
+        assertTrue("showFullName must remain true", domain.showFullName)
+        assertTrue("showEmail must remain true", domain.showEmail)
+        assertTrue("showPassword must be enforced true for registration", domain.showPassword)
+        assertTrue("showConfirmPassword must be enforced true for registration", domain.showConfirmPassword)
     }
 }
 
