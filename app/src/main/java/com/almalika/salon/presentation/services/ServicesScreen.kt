@@ -159,8 +159,9 @@ fun ServiceItemCard(
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
+                    val formattedPrice = com.almalika.salon.core.currency.CurrencyFormatter.format(service.price)
                     Text(
-                        text = "₹${service.price.toInt()}",
+                        text = formattedPrice,
                         style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
                         color = MaterialTheme.colorScheme.primary
                     )

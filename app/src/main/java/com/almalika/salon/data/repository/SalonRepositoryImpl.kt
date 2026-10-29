@@ -87,8 +87,14 @@ class SalonRepositoryImpl @Inject constructor(
         }
     }
 
-    override fun getBookingConfig(): Flow<BookingConfig> {
+    override fun getBarbers(): Flow<List<Barber>> {
         return dao.observeMenu().map { entity ->
+            parseMenu(entity?.json).toBarbers()
+        }
+    }
+
+    override fun getBookingConfig(): Flow<BookingConfig> {
+        return dao.observeMenu().map { _ ->
             toBookingConfig()
         }
     }

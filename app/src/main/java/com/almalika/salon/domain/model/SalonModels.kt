@@ -11,6 +11,7 @@ data class SalonMasterConfig(
     val contact: ContactInfo,
     val share: ShareConfig,
     val legal: LegalConfig,
+    val appConfig: AppConfig = AppConfig(),
     val profile: ProfileConfig? = null,
     val franchise: FranchiseConfig? = null,
     val startup: StartupConfig = StartupConfig(),
@@ -22,7 +23,31 @@ data class SalonMasterConfig(
     val authentication: AuthenticationConfig = AuthenticationConfig(),
     val navigation: NavigationConfig = NavigationConfig(),
     val theme: ThemeConfig = ThemeConfig(),
+    val pages: Map<String, String> = emptyMap(),
+    val screens: List<ScreenSpec> = emptyList(),
     val remoteConfig: RemoteConfig = RemoteConfig()
+)
+
+data class ScreenSpec(
+    val id: String,
+    val title: String,
+    val type: String,
+    val enabled: Boolean = true,
+    val showInDrawer: Boolean = false,
+    val showInBottomNavigation: Boolean = false,
+    val requiresLogin: Boolean = false,
+    val urlKey: String? = null,
+    val icon: String? = null,
+    val subtitle: String? = null
+)
+
+data class AppConfig(
+    val maintenanceMode: Boolean = false,
+    val maintenanceMessage: String = "We will be back soon. Please try again later.",
+    val forceUpdate: Boolean = false,
+    val minimumAppVersion: String = "1.0.0",
+    val showInternetStatus: Boolean = false,
+    val minimumSupportedConfigVersion: Int = 1
 )
 
 data class RemoteConfig(
@@ -41,13 +66,34 @@ data class RemoteConfig(
     val allowArbitraryCode: Boolean = false
 )
 
+data class ThemeColors(
+    val primary: String? = null,
+    val primaryDark: String? = null,
+    val secondary: String? = null,
+    val background: String? = null,
+    val surface: String? = null,
+    val textPrimary: String? = null,
+    val textSecondary: String? = null,
+    val buttonText: String? = null,
+    val divider: String? = null,
+    val error: String? = null,
+    val success: String? = null,
+    val onPrimary: String? = null,
+    val onSurface: String? = null,
+    val onError: String? = null
+)
+
 data class ThemeConfig(
     val themeMode: String = "dark",
     val primaryColor: String = "#D4AF37",
     val secondaryColor: String = "#A67C1E",
     val backgroundColor: String = "#18181B",
     val surfaceColor: String = "#27272A",
-    val textColor: String = "#FFFFFF"
+    val textColor: String = "#FFFFFF",
+    val colors: ThemeColors? = null,
+    val cornerRadiusDp: Int = 12,
+    val buttonCornerRadiusDp: Int = 10,
+    val useSystemStatusBarIcons: Boolean = false
 )
 
 data class StartupConfig(
@@ -90,7 +136,7 @@ data class OnboardingPage(
 data class LoginConfig(
     val id: String = "login",
     val enabled: Boolean = true,
-    val authMode: String = "firebase_email_password",
+    val authMode: String = "firebase_email_link",
     val allowGuest: Boolean = true,
     val title: String = "Welcome Back",
     val subtitle: String = "Sign in to your Al-Malaika Salon account.",
@@ -99,12 +145,14 @@ data class LoginConfig(
     val textColor: String = "#FFFFFF",
     val accentColor: String = "#D4AF37",
     val showEmailLogin: Boolean = true,
+    val showPasswordLogin: Boolean = false,
     val showPhoneLogin: Boolean = false,
     val showRegister: Boolean = true,
     val showForgotPassword: Boolean = true,
     val showGuestButton: Boolean = true,
     val guestButtonText: String = "Continue as Guest",
     val loginButtonText: String = "Sign In",
+    val emailLinkButtonText: String = "Send Sign-In Link",
     val registerButtonText: String = "Create Account",
     val forgotPasswordButtonText: String = "Forgot Password?",
     val privacyPolicyUrl: String = "https://er-md-hafiz.github.io/api.almalaikasalon/privacy.html",
@@ -292,6 +340,7 @@ data class FranchiseConfig(
     val title: String = "",
     val subtitle: String = "",
     val description: String = "",
+    val bannerImage: String = "",
     val contactPerson: String = "",
     val contactNumber: String = "",
     val email: String = "",
@@ -417,6 +466,13 @@ data class GalleryImage(
     val order: Int
 )
 
+data class Barber(
+    val id: String,
+    val name: String,
+    val expertise: String,
+    val imageUrl: String
+)
+
 data class Branch(
     val id: String,
     val name: String,
@@ -471,6 +527,11 @@ data class Review(
     val rating: Double,
     val comment: String,
     val date: String,
-    val avatarUrl: String = ""
-)
+    val avatarUrl: String = "",
+    val source: String = "",
+    val isVerified: Boolean = true
+) {
+    val isDemo: Boolean
+        get() = source.equals("demo", ignoreCase = true) || !isVerified || comment.startsWith("DEMO ONLY", ignoreCase = true)
+}
 

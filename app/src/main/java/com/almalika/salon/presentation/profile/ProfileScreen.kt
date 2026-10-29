@@ -28,15 +28,30 @@ import com.almalika.salon.presentation.auth.AuthViewModel
 fun ProfileScreen(
     master: SalonMasterConfig,
     authViewModel: AuthViewModel,
-    isDarkMode: Boolean,
-    onToggleDarkMode: (Boolean) -> Unit,
+    themeMode: String = "auto",
+    onSelectThemeMode: (String) -> Unit = {},
+    notificationsEnabled: Boolean = true,
+    onToggleNotifications: (Boolean) -> Unit = {},
+    isDarkMode: Boolean = true,
+    onToggleDarkMode: (Boolean) -> Unit = {},
     onAction: (AppAction) -> Unit,
     onSignedOut: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     val authState by authViewModel.authState.collectAsState()
     var showSignOutDialog by remember { mutableStateOf(false) }
-    var notificationsEnabled by remember { mutableStateOf(true) }
+    var showThemeModeDialog by remember { mutableStateOf(false) }
+
+    if (showThemeModeDialog) {
+        DisplayModeDialog(
+            currentMode = themeMode,
+            onDismiss = { showThemeModeDialog = false },
+            onSelectMode = { mode ->
+                onSelectThemeMode(mode)
+                showThemeModeDialog = false
+            }
+        )
+    }
 
     if (showSignOutDialog) {
         AlertDialog(
@@ -97,10 +112,11 @@ fun ProfileScreen(
                 colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
             ) {
                 Column(modifier = Modifier.padding(vertical = 4.dp)) {
-                    // Dark Mode Toggle
+                    // Display Mode (Theme Mode Dialog Row replacing Switch)
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
+                            .clickable { showThemeModeDialog = true }
                             .padding(horizontal = 16.dp, vertical = 12.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
@@ -112,8 +128,12 @@ fun ProfileScreen(
                             contentAlignment = Alignment.Center
                         ) {
                             Icon(
-                                imageVector = Icons.Default.DarkMode,
-                                contentDescription = "Dark Mode",
+                                imageVector = when (themeMode) {
+                                    "light" -> Icons.Default.LightMode
+                                    "dark" -> Icons.Default.DarkMode
+                                    else -> Icons.Default.BrightnessAuto
+                                },
+                                contentDescription = "Display Mode",
                                 tint = MaterialTheme.colorScheme.primary,
                                 modifier = Modifier.size(22.dp)
                             )
@@ -121,27 +141,34 @@ fun ProfileScreen(
                         Spacer(modifier = Modifier.width(16.dp))
                         Column(modifier = Modifier.weight(1f)) {
                             Text(
-                                text = "Dark Theme",
+                                text = "Display Mode",
                                 style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.SemiBold)
                             )
                             Text(
-                                text = "Royal Al-Malaika golden dark aesthetic",
+                                text = when (themeMode.lowercase()) {
+                                    "light" -> "Light Mode"
+                                    "dark" -> "Dark Mode"
+                                    else -> "Auto (System Default)"
+                                },
                                 style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
                         }
-                        Switch(
-                            checked = isDarkMode,
-                            onCheckedChange = onToggleDarkMode
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.ArrowForwardIos,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f),
+                            modifier = Modifier.size(16.dp)
                         )
                     }
 
                     HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp), color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f))
 
-                    // Notifications Toggle
+                    // Notifications Toggle Row
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
+                            .clickable { onToggleNotifications(!notificationsEnabled) }
                             .padding(horizontal = 16.dp, vertical = 12.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
@@ -173,7 +200,7 @@ fun ProfileScreen(
                         }
                         Switch(
                             checked = notificationsEnabled,
-                            onCheckedChange = { notificationsEnabled = it }
+                            onCheckedChange = null // Click handled on entire row
                         )
                     }
                 }
@@ -566,6 +593,161 @@ private fun AppInformationFooter(master: SalonMasterConfig) {
                 text = "© 2026 Al-Malaika Salon. All rights reserved.",
                 style = MaterialTheme.typography.labelSmall.copy(fontSize = 11.sp),
                 color = MaterialTheme.colorScheme.outline.copy(alpha = 0.8f)
+            )
+        }
+    }
+}
+
+@Composable
+fun DisplayModeDialog(
+    currentMode: String,
+    onDismiss: () -> Unit,
+    onSelectMode: (String) -> Unit
+) {
+    androidx.compose.ui.window.Dialog(onDismissRequest = onDismiss) {
+        Card(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 8.dp),
+            shape = RoundedCornerShape(12.dp),
+            colors = CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.surface
+            ),
+            elevation = CardDefaults.cardElevation(defaultElevation = 6.dp)
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(start = 16.dp, end = 16.dp, top = 16.dp, bottom = 24.dp)
+            ) {
+                // Header: Title and Close button
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = "Display Mode",
+                        style = MaterialTheme.typography.titleLarge.copy(
+                            fontWeight = FontWeight.Bold,
+                            letterSpacing = 0.15.sp
+                        ),
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+
+                    IconButton(
+                        onClick = onDismiss,
+                        modifier = Modifier.size(32.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Close,
+                            contentDescription = "Close",
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(14.dp))
+                HorizontalDivider(
+                    thickness = 1.dp,
+                    color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f)
+                )
+                Spacer(modifier = Modifier.height(18.dp))
+
+                // Mode Selector Bar: Auto, Light, Dark (matching LinearLayout weightSum=3 layout)
+                Surface(
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(10.dp),
+                    color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.45f),
+                    border = androidx.compose.foundation.BorderStroke(
+                        width = 1.dp,
+                        color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f)
+                    )
+                ) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(4.dp),
+                        horizontalArrangement = Arrangement.spacedBy(4.dp)
+                    ) {
+                        DisplayModeTab(
+                            title = "Auto",
+                            icon = Icons.Default.BrightnessAuto,
+                            isSelected = currentMode.lowercase() == "auto",
+                            onClick = { onSelectMode("auto") },
+                            modifier = Modifier.weight(1f)
+                        )
+
+                        DisplayModeTab(
+                            title = "Light",
+                            icon = Icons.Default.LightMode,
+                            isSelected = currentMode.lowercase() == "light",
+                            onClick = { onSelectMode("light") },
+                            modifier = Modifier.weight(1f)
+                        )
+
+                        DisplayModeTab(
+                            title = "Dark",
+                            icon = Icons.Default.DarkMode,
+                            isSelected = currentMode.lowercase() == "dark",
+                            onClick = { onSelectMode("dark") },
+                            modifier = Modifier.weight(1f)
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun DisplayModeTab(
+    title: String,
+    icon: ImageVector,
+    isSelected: Boolean,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Surface(
+        onClick = onClick,
+        modifier = modifier.height(44.dp),
+        shape = RoundedCornerShape(8.dp),
+        color = if (isSelected) {
+            MaterialTheme.colorScheme.primary
+        } else {
+            androidx.compose.ui.graphics.Color.Transparent
+        },
+        shadowElevation = if (isSelected) 2.dp else 0.dp
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(horizontal = 6.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.Center
+        ) {
+            Icon(
+                imageVector = icon,
+                contentDescription = null,
+                tint = if (isSelected) {
+                    MaterialTheme.colorScheme.onPrimary
+                } else {
+                    MaterialTheme.colorScheme.onSurfaceVariant
+                },
+                modifier = Modifier.size(18.dp)
+            )
+            Spacer(modifier = Modifier.width(6.dp))
+            Text(
+                text = title,
+                style = MaterialTheme.typography.bodyMedium.copy(
+                    fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
+                    letterSpacing = 0.1.sp
+                ),
+                color = if (isSelected) {
+                    MaterialTheme.colorScheme.onPrimary
+                } else {
+                    MaterialTheme.colorScheme.onSurfaceVariant
+                }
             )
         }
     }

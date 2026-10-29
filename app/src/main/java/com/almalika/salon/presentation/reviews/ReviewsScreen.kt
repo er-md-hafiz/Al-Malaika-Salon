@@ -7,6 +7,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.RateReview
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.*
@@ -16,7 +17,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -28,6 +28,7 @@ import com.almalika.salon.domain.model.Review
 import com.almalika.salon.domain.model.SalonMasterConfig
 import com.almalika.salon.presentation.common.ErrorRetryView
 import com.almalika.salon.presentation.common.ShimmerCard
+import java.util.Locale
 
 @Composable
 fun ReviewsScreen(
@@ -62,6 +63,14 @@ fun ReviewsScreen(
 
         is UiState.Success -> {
             val reviews = state.data
+            // ALWAYS compute aggregate rating and count from reviews[] at runtime
+            val computedCount = reviews.size
+            val computedRating = if (computedCount > 0) {
+                reviews.map { it.rating }.average()
+            } else {
+                0.0
+            }
+
             Scaffold(
                 modifier = modifier.fillMaxSize(),
                 floatingActionButton = {
@@ -85,6 +94,8 @@ fun ReviewsScreen(
                         SalonReviewSummaryHeader(
                             salonName = master.salon.name,
                             tagline = master.salon.tagline,
+                            rating = computedRating,
+                            reviewCount = computedCount,
                             onRateClick = { onAction(AppAction.RateApp) }
                         )
                     }
@@ -108,6 +119,8 @@ fun ReviewsScreen(
 fun SalonReviewSummaryHeader(
     salonName: String,
     tagline: String,
+    rating: Double,
+    reviewCount: Int,
     onRateClick: () -> Unit
 ) {
     Card(
@@ -136,25 +149,42 @@ fun SalonReviewSummaryHeader(
                 )
             }
             Spacer(modifier = Modifier.height(12.dp))
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(4.dp)
-            ) {
-                repeat(5) {
-                    Icon(
-                        imageVector = Icons.Default.Star,
-                        contentDescription = null,
-                        tint = MaterialTheme.colorScheme.primary,
-                        modifier = Modifier.size(24.dp)
+
+            if (reviewCount > 0) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(4.dp)
+                ) {
+                    Text(
+                        text = String.format(Locale.US, "%.1f", rating),
+                        style = MaterialTheme.typography.headlineMedium.copy(fontWeight = FontWeight.Bold),
+                        color = MaterialTheme.colorScheme.primary
                     )
+                    Spacer(modifier = Modifier.width(6.dp))
+                    repeat(5) { index ->
+                        val isFilled = index < rating.toInt()
+                        Icon(
+                            imageVector = Icons.Default.Star,
+                            contentDescription = null,
+                            tint = if (isFilled) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outlineVariant,
+                            modifier = Modifier.size(22.dp)
+                        )
+                    }
                 }
+                Spacer(modifier = Modifier.height(4.dp))
+                Text(
+                    text = "Based on $reviewCount verified client ${if (reviewCount == 1) "review" else "reviews"}",
+                    style = MaterialTheme.typography.labelMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            } else {
+                Text(
+                    text = "No reviews yet",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
             }
-            Spacer(modifier = Modifier.height(6.dp))
-            Text(
-                text = "Verified Salon Reviews & Client Feedback",
-                style = MaterialTheme.typography.labelMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
+
             Spacer(modifier = Modifier.height(14.dp))
             OutlinedButton(
                 onClick = onRateClick,
@@ -264,10 +294,42 @@ fun ReviewCard(
                 Spacer(modifier = Modifier.width(12.dp))
 
                 Column(modifier = Modifier.weight(1f)) {
-                    Text(
-                        text = review.author,
-                        style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.Bold)
-                    )
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        Text(
+                            text = review.author,
+                            style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.Bold)
+                        )
+                        // Visible Sample Data Chip whenever source == "demo" OR isVerified == false
+                        if (review.isDemo) {
+                            Surface(
+                                shape = RoundedCornerShape(6.dp),
+                                color = MaterialTheme.colorScheme.surfaceVariant,
+                                modifier = Modifier.padding(start = 4.dp)
+                            ) {
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.Info,
+                                        contentDescription = null,
+                                        tint = MaterialTheme.colorScheme.outline,
+                                        modifier = Modifier.size(12.dp)
+                                    )
+                                    Spacer(modifier = Modifier.width(4.dp))
+                                    Text(
+                                        text = "Sample data",
+                                        style = MaterialTheme.typography.labelSmall,
+                                        color = MaterialTheme.colorScheme.outline
+                                    )
+                                }
+                            }
+                        }
+                    }
+
                     if (review.date.isNotBlank()) {
                         Text(
                             text = review.date,

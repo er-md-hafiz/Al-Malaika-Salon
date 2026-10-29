@@ -37,11 +37,12 @@ fun FranchiseDto.toDomain(): FranchiseConfig {
         title = title.orEmpty(),
         subtitle = subtitle.orEmpty(),
         description = description.orEmpty(),
+        bannerImage = bannerImage?.ifBlank { null } ?: imageUrl.orEmpty(),
         contactPerson = contactPerson.orEmpty(),
         contactNumber = contactNumber.orEmpty(),
         email = email.orEmpty(),
         whatsApp = whatsApp.orEmpty(),
-        website = website.orEmpty()
+        website = website?.ifBlank { null } ?: ctaUrl.orEmpty()
     )
 }
 
@@ -115,12 +116,14 @@ fun LoginConfigDto.toDomain(): LoginConfig {
         textColor = textColor?.ifBlank { "#FFFFFF" } ?: "#FFFFFF",
         accentColor = accentColor?.ifBlank { "#D4AF37" } ?: "#D4AF37",
         showEmailLogin = showEmailLogin ?: true,
+        showPasswordLogin = showPasswordLogin ?: false,
         showPhoneLogin = showPhoneLogin ?: false,
         showRegister = showRegister ?: true,
         showForgotPassword = showForgotPassword ?: true,
         showGuestButton = showGuestButton ?: true,
         guestButtonText = guestButtonText?.ifBlank { null } ?: continueAsGuestLabel?.ifBlank { "Continue as Guest" } ?: "Continue as Guest",
         loginButtonText = loginButtonText?.ifBlank { null } ?: loginButtonLabel?.ifBlank { "Sign In" } ?: "Sign In",
+        emailLinkButtonText = emailLinkButtonText?.ifBlank { "Send Sign-In Link" } ?: "Send Sign-In Link",
         registerButtonText = registerButtonText?.ifBlank { "Create Account" } ?: "Create Account",
         forgotPasswordButtonText = forgotPasswordButtonText?.ifBlank { "Forgot Password?" } ?: "Forgot Password?",
         privacyPolicyUrl = privacyPolicyUrl?.ifBlank { "https://er-md-hafiz.github.io/api.almalaikasalon/privacy.html" } ?: "https://er-md-hafiz.github.io/api.almalaikasalon/privacy.html",
@@ -214,6 +217,25 @@ fun NavigationConfigDto.toDomain(): NavigationConfig {
     )
 }
 
+fun ThemeColorsDto.toDomain(): ThemeColors {
+    return ThemeColors(
+        primary = primary,
+        primaryDark = primaryDark,
+        secondary = secondary,
+        background = background,
+        surface = surface,
+        textPrimary = textPrimary,
+        textSecondary = textSecondary,
+        buttonText = buttonText,
+        divider = divider,
+        error = error,
+        success = success,
+        onPrimary = onPrimary,
+        onSurface = onSurface,
+        onError = onError
+    )
+}
+
 fun ThemeConfigDto.toDomain(): ThemeConfig {
     val prim = colors?.primary?.ifBlank { null } ?: primaryColor?.ifBlank { null } ?: "#D4AF37"
     val sec = colors?.secondary?.ifBlank { null } ?: secondaryColor?.ifBlank { null } ?: "#A67C1E"
@@ -226,7 +248,11 @@ fun ThemeConfigDto.toDomain(): ThemeConfig {
         secondaryColor = sec,
         backgroundColor = bg,
         surfaceColor = surf,
-        textColor = txt
+        textColor = txt,
+        colors = colors?.toDomain(),
+        cornerRadiusDp = cornerRadiusDp ?: 12,
+        buttonCornerRadiusDp = buttonCornerRadiusDp ?: 10,
+        useSystemStatusBarIcons = useSystemStatusBarIcons ?: false
     )
 }
 
@@ -402,6 +428,7 @@ fun MenuResponseDto.toDomain(): SalonMasterConfig {
         contact = contactInfo,
         share = shareConfig,
         legal = legalConfig,
+        appConfig = appConfig?.toDomain() ?: AppConfig(),
         profile = prof?.toDomain(),
         franchise = franch?.toDomain(),
         startup = startup?.toDomain() ?: StartupConfig(),
@@ -413,7 +440,36 @@ fun MenuResponseDto.toDomain(): SalonMasterConfig {
         authentication = authentication?.toDomain() ?: AuthenticationConfig(),
         navigation = navConfig,
         theme = theme?.toDomain() ?: ThemeConfig(),
+        pages = pages.orEmpty(),
+        screens = screens?.map { it.toDomain() } ?: emptyList(),
         remoteConfig = remoteConfig?.toDomain() ?: RemoteConfig()
+    )
+}
+
+fun ScreenSpecDto.toDomain(): ScreenSpec {
+    return ScreenSpec(
+        id = id.orEmpty(),
+        title = title.orEmpty(),
+        type = type.orEmpty(),
+        enabled = enabled ?: true,
+        showInDrawer = showInDrawer ?: false,
+        showInBottomNavigation = showInBottomNavigation ?: false,
+        requiresLogin = requiresLogin ?: false,
+        urlKey = urlKey,
+        icon = icon,
+        subtitle = subtitle
+    )
+}
+
+fun AppConfigDto.toDomain(): AppConfig {
+    return AppConfig(
+        maintenanceMode = maintenanceMode ?: false,
+        maintenanceMessage = maintenanceMessage?.ifBlank { "We will be back soon. Please try again later." }
+            ?: "We will be back soon. Please try again later.",
+        forceUpdate = forceUpdate ?: false,
+        minimumAppVersion = minimumAppVersion?.ifBlank { "1.0.0" } ?: "1.0.0",
+        showInternetStatus = showInternetStatus ?: false,
+        minimumSupportedConfigVersion = minimumSupportedConfigVersion ?: 1
     )
 }
 
@@ -502,7 +558,7 @@ fun MenuResponseDto.toHomeConfig(): HomeConfig {
                     ?: ""
 
                 val normalizedRoute = when (rawRoute.lowercase().trim()) {
-                    "price_list", "prices" -> "services"
+                    "prices" -> "price_list"
                     "location" -> "locations"
                     "franchise" -> "about"
                     else -> rawRoute
@@ -699,7 +755,7 @@ fun MenuResponseDto.toHomeConfig(): HomeConfig {
             sourceUrl = "",
             itemsToShow = 1,
             enabled = true,
-            order = order++
+            order = order
         )
     )
 
@@ -852,13 +908,16 @@ fun MenuResponseDto.toOffers(): List<Offer> {
 }
 
 fun ReviewDto.toDomain(): Review {
+    val reviewBody = comment?.ifBlank { null } ?: reviewText.orEmpty()
     return Review(
         id = id?.toString().orEmpty(),
         author = author.orEmpty().ifBlank { "Verified Client" },
         rating = rating ?: 5.0,
-        comment = comment.orEmpty(),
+        comment = reviewBody,
         date = date.orEmpty(),
-        avatarUrl = avatarUrl.orEmpty()
+        avatarUrl = avatarUrl.orEmpty(),
+        source = source.orEmpty(),
+        isVerified = isVerified ?: true
     )
 }
 
@@ -880,6 +939,19 @@ fun MenuResponseDto.toGalleryImages(): List<GalleryImage> {
             order = index
         )
     } ?: emptyList()
+}
+
+fun BarberDto.toDomain(): Barber {
+    return Barber(
+        id = id?.toString().orEmpty(),
+        name = name.orEmpty().ifBlank { "Any Available" },
+        expertise = expertise.orEmpty(),
+        imageUrl = imageUrl.orEmpty()
+    )
+}
+
+fun MenuResponseDto.toBarbers(): List<Barber> {
+    return barbers?.map { it.toDomain() } ?: emptyList()
 }
 
 fun MenuResponseDto.toBranches(): List<Branch> {

@@ -1,11 +1,9 @@
 package com.almalika.salon.presentation.main
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AccountCircle
@@ -38,7 +36,6 @@ import com.almalika.salon.presentation.about.AboutScreen
 import com.almalika.salon.presentation.booking.BookingScreen
 import com.almalika.salon.presentation.booking.BookingViewModel
 import com.almalika.salon.presentation.common.ErrorRetryView
-import com.almalika.salon.presentation.common.ShimmerCard
 import com.almalika.salon.presentation.contact.ContactScreen
 import com.almalika.salon.presentation.gallery.GalleryScreen
 import com.almalika.salon.presentation.gallery.GalleryViewModel
@@ -57,7 +54,6 @@ import com.almalika.salon.presentation.reviews.ReviewsScreen
 import com.almalika.salon.presentation.reviews.ReviewsViewModel
 import com.almalika.salon.presentation.services.ServicesScreen
 import com.almalika.salon.presentation.services.ServicesViewModel
-import com.almalika.salon.presentation.settings.SettingsScreen
 import com.almalika.salon.presentation.login.LoginScreen
 import com.almalika.salon.presentation.register.RegisterScreen
 import com.almalika.salon.presentation.forgotpassword.ForgotPasswordScreen
@@ -98,16 +94,54 @@ fun MainAppShell(
         is UiState.Success -> {
             val data = state.data
             val master = data.masterConfig
+
+            // Maintenance mode: show a simple blocker and stop rendering the shell
+            if (master.appConfig.maintenanceMode) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .background(MaterialTheme.colorScheme.background),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        modifier = Modifier.padding(32.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Menu,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier.size(64.dp)
+                        )
+                        Spacer(modifier = Modifier.height(24.dp))
+                        Text(
+                            text = "Under Maintenance",
+                            style = MaterialTheme.typography.headlineSmall.copy(fontWeight = FontWeight.Bold),
+                            color = MaterialTheme.colorScheme.onBackground
+                        )
+                        Spacer(modifier = Modifier.height(12.dp))
+                        Text(
+                            text = master.appConfig.maintenanceMessage.ifBlank { "We will be back soon. Please try again later." },
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            textAlign = androidx.compose.ui.text.style.TextAlign.Center
+                        )
+                    }
+                }
+                return
+            }
             val authViewModel: AuthViewModel = hiltViewModel()
             val authState by authViewModel.authState.collectAsState()
             val sessionState by authViewModel.sessionState.collectAsState()
 
             val currentAuthUser = (authState as? AuthState.Authenticated)?.user
 
-            val activeBottomNav = remember(master.bottomNavigation) {
+            val maxBottom = master.navigation.bottomNavigationMaxItems.coerceAtLeast(1)
+            val activeBottomNav = remember(master.bottomNavigation, maxBottom) {
                 master.bottomNavigation
                     .filter { it.enabled }
                     .sortedBy { it.order }
+                    .take(maxBottom)
             }
 
             val activeDrawer = remember(master.drawer, sessionState) {
@@ -194,6 +228,7 @@ fun MainAppShell(
                     is AppAction.HomeService -> navController.navigate("home_service") { launchSingleTop = true }
                     is AppAction.Gallery -> navController.navigate("gallery") { launchSingleTop = true }
                     is AppAction.Locations -> navController.navigate("locations") { launchSingleTop = true }
+                    is AppAction.Franchise -> navController.navigate("franchise") { launchSingleTop = true }
                     is AppAction.About -> navController.navigate("about") { launchSingleTop = true }
                     is AppAction.Contact -> navController.navigate("contact") { launchSingleTop = true }
                     is AppAction.Settings -> navController.navigate("settings") { launchSingleTop = true }
@@ -541,16 +576,29 @@ fun MainAppShell(
                             AboutScreen(master = master, onAction = handleAction)
                         }
 
+                        composable("franchise") {
+                            com.almalika.salon.presentation.franchise.FranchiseScreen(
+                                master = master,
+                                onAction = handleAction
+                            )
+                        }
+
                         composable("contact") {
                             ContactScreen(master = master, onAction = handleAction)
                         }
 
                         composable("profile") {
                             val userDarkMode by viewModel.isDarkMode.collectAsState()
+                            val themeMode by viewModel.themeMode.collectAsState()
+                            val notificationsEnabled by viewModel.isNotificationsEnabled.collectAsState()
                             val currentIsDark = userDarkMode ?: (master.theme.themeMode.lowercase() != "light")
                             ProfileScreen(
                                 master = master,
                                 authViewModel = authViewModel,
+                                themeMode = themeMode,
+                                onSelectThemeMode = { viewModel.setThemeMode(it) },
+                                notificationsEnabled = notificationsEnabled,
+                                onToggleNotifications = { viewModel.setNotificationsEnabled(it) },
                                 isDarkMode = currentIsDark,
                                 onToggleDarkMode = { viewModel.setDarkMode(it) },
                                 onAction = handleAction,
@@ -566,10 +614,16 @@ fun MainAppShell(
 
                         composable("settings") {
                             val userDarkMode by viewModel.isDarkMode.collectAsState()
+                            val themeMode by viewModel.themeMode.collectAsState()
+                            val notificationsEnabled by viewModel.isNotificationsEnabled.collectAsState()
                             val currentIsDark = userDarkMode ?: (master.theme.themeMode.lowercase() != "light")
                             ProfileScreen(
                                 master = master,
                                 authViewModel = authViewModel,
+                                themeMode = themeMode,
+                                onSelectThemeMode = { viewModel.setThemeMode(it) },
+                                notificationsEnabled = notificationsEnabled,
+                                onToggleNotifications = { viewModel.setNotificationsEnabled(it) },
                                 isDarkMode = currentIsDark,
                                 onToggleDarkMode = { viewModel.setDarkMode(it) },
                                 onAction = handleAction,
@@ -609,6 +663,7 @@ fun getScreenTitle(route: String, master: SalonMasterConfig): String {
         "booking" -> "Book Appointment"
         "home_service" -> "Home Service"
         "about" -> "About Us"
+        "franchise" -> "Franchise"
         "contact" -> "Contact Us"
         "profile" -> "Profile & Settings"
         "settings" -> "Settings"

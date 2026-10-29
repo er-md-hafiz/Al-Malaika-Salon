@@ -121,10 +121,9 @@ fun AboutScreen(
                             if (master.salon.whatsapp.isNotBlank()) {
                                 Button(
                                     onClick = { onAction(AppAction.WhatsApp(master.salon.whatsapp)) },
-                                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF25D366)),
                                     shape = RoundedCornerShape(20.dp)
                                 ) {
-                                    Text("WhatsApp", color = Color.White)
+                                    Text("WhatsApp")
                                 }
                             }
                         }

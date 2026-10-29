@@ -147,13 +147,11 @@ fun HomeServiceScreen(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .height(52.dp),
-                            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF25D366)),
                             shape = RoundedCornerShape(24.dp)
                         ) {
                             Text(
                                 text = "Book Home Service on WhatsApp",
-                                style = MaterialTheme.typography.titleMedium,
-                                color = Color.White
+                                style = MaterialTheme.typography.titleMedium
                             )
                         }
                     }

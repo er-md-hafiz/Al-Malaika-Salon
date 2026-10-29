@@ -31,6 +31,9 @@ data class MenuResponseDto(
     @Json(name = "home") val home: HomeScreenConfigDto? = null,
     @Json(name = "theme") val theme: ThemeConfigDto? = null,
     @Json(name = "featureFlags") val featureFlags: Map<String, Boolean>? = null,
+    @Json(name = "appConfig") val appConfig: AppConfigDto? = null,
+    @Json(name = "pages") val pages: Map<String, String>? = null,
+    @Json(name = "screens") val screens: List<ScreenSpecDto>? = null,
     @Json(name = "remoteConfig") val remoteConfig: RemoteConfigDto? = null
 )
 
@@ -63,7 +66,10 @@ data class ThemeColorsDto(
     @Json(name = "buttonText") val buttonText: String? = null,
     @Json(name = "divider") val divider: String? = null,
     @Json(name = "error") val error: String? = null,
-    @Json(name = "success") val success: String? = null
+    @Json(name = "success") val success: String? = null,
+    @Json(name = "onPrimary") val onPrimary: String? = null,
+    @Json(name = "onSurface") val onSurface: String? = null,
+    @Json(name = "onError") val onError: String? = null
 )
 
 @JsonClass(generateAdapter = true)
@@ -75,7 +81,10 @@ data class ThemeConfigDto(
     @Json(name = "secondaryColor") val secondaryColor: String? = null,
     @Json(name = "backgroundColor") val backgroundColor: String? = null,
     @Json(name = "surfaceColor") val surfaceColor: String? = null,
-    @Json(name = "textColor") val textColor: String? = null
+    @Json(name = "textColor") val textColor: String? = null,
+    @Json(name = "cornerRadiusDp") val cornerRadiusDp: Int? = null,
+    @Json(name = "buttonCornerRadiusDp") val buttonCornerRadiusDp: Int? = null,
+    @Json(name = "useSystemStatusBarIcons") val useSystemStatusBarIcons: Boolean? = null
 )
 
 @JsonClass(generateAdapter = true)
@@ -141,6 +150,7 @@ data class LoginConfigDto(
     @Json(name = "textColor") val textColor: String? = null,
     @Json(name = "accentColor") val accentColor: String? = null,
     @Json(name = "showEmailLogin") val showEmailLogin: Boolean? = true,
+    @Json(name = "showPasswordLogin") val showPasswordLogin: Boolean? = false,
     @Json(name = "showPhoneLogin") val showPhoneLogin: Boolean? = false,
     @Json(name = "showRegister") val showRegister: Boolean? = true,
     @Json(name = "showForgotPassword") val showForgotPassword: Boolean? = true,
@@ -150,6 +160,7 @@ data class LoginConfigDto(
     @Json(name = "guestButtonText") val guestButtonText: String? = null,
     @Json(name = "loginButtonLabel") val loginButtonLabel: String? = null,
     @Json(name = "loginButtonText") val loginButtonText: String? = null,
+    @Json(name = "emailLinkButtonText") val emailLinkButtonText: String? = null,
     @Json(name = "registerButtonText") val registerButtonText: String? = null,
     @Json(name = "forgotPasswordButtonText") val forgotPasswordButtonText: String? = null,
     @Json(name = "privacyPolicyUrl") val privacyPolicyUrl: String? = null,
@@ -257,9 +268,23 @@ data class HomeSectionConfigDto(
 @JsonClass(generateAdapter = true)
 data class MetadataDto(
     @Json(name = "schemaVersion") val schemaVersion: String? = null,
+    @Json(name = "uiConfigVersion") val uiConfigVersion: Int? = null,
     @Json(name = "lastUpdated") val lastUpdated: String? = null,
     @Json(name = "locale") val locale: String? = null,
     @Json(name = "currencyCode") val currencyCode: String? = null
+)
+
+@JsonClass(generateAdapter = true)
+data class AppConfigDto(
+    @Json(name = "appName") val appName: String? = null,
+    @Json(name = "tagline") val tagline: String? = null,
+    @Json(name = "defaultLanguage") val defaultLanguage: String? = null,
+    @Json(name = "minimumSupportedConfigVersion") val minimumSupportedConfigVersion: Int? = null,
+    @Json(name = "maintenanceMode") val maintenanceMode: Boolean? = false,
+    @Json(name = "maintenanceMessage") val maintenanceMessage: String? = null,
+    @Json(name = "forceUpdate") val forceUpdate: Boolean? = false,
+    @Json(name = "minimumAppVersion") val minimumAppVersion: String? = null,
+    @Json(name = "showInternetStatus") val showInternetStatus: Boolean? = false
 )
 
 @JsonClass(generateAdapter = true)
@@ -359,8 +384,11 @@ data class ReviewDto(
     @Json(name = "author") val author: String? = null,
     @Json(name = "rating") val rating: Double? = null,
     @Json(name = "comment") val comment: String? = null,
+    @Json(name = "reviewText") val reviewText: String? = null,
     @Json(name = "date") val date: String? = null,
-    @Json(name = "avatarUrl") val avatarUrl: String? = null
+    @Json(name = "avatarUrl") val avatarUrl: String? = null,
+    @Json(name = "source") val source: String? = null,
+    @Json(name = "isVerified") val isVerified: Boolean? = true
 )
 
 @JsonClass(generateAdapter = true)
@@ -412,6 +440,20 @@ data class ProfileMenuItemDto(
 )
 
 @JsonClass(generateAdapter = true)
+data class ScreenSpecDto(
+    @Json(name = "id") val id: String? = null,
+    @Json(name = "title") val title: String? = null,
+    @Json(name = "type") val type: String? = null,
+    @Json(name = "enabled") val enabled: Boolean? = true,
+    @Json(name = "showInDrawer") val showInDrawer: Boolean? = false,
+    @Json(name = "showInBottomNavigation") val showInBottomNavigation: Boolean? = false,
+    @Json(name = "requiresLogin") val requiresLogin: Boolean? = false,
+    @Json(name = "urlKey") val urlKey: String? = null,
+    @Json(name = "icon") val icon: String? = null,
+    @Json(name = "subtitle") val subtitle: String? = null
+)
+
+@JsonClass(generateAdapter = true)
 data class FranchiseDto(
     @Json(name = "enabled") val enabled: Boolean? = false,
     @Json(name = "title") val title: String? = null,
@@ -430,5 +472,8 @@ data class FranchiseDto(
     @Json(name = "email") val email: String? = null,
     @Json(name = "whatsApp") val whatsApp: String? = null,
     @Json(name = "website") val website: String? = null,
-    @Json(name = "bannerImage") val bannerImage: String? = null
+    @Json(name = "bannerImage") val bannerImage: String? = null,
+    @Json(name = "imageUrl") val imageUrl: String? = null,
+    @Json(name = "ctaUrl") val ctaUrl: String? = null,
+    @Json(name = "ctaText") val ctaText: String? = null
 )

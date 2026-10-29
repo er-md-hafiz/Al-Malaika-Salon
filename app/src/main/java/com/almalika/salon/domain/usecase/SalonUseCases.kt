@@ -67,6 +67,12 @@ class GetLocationsUseCase @Inject constructor(
     }
 }
 
+class GetBarbersUseCase @Inject constructor(
+    private val repository: SalonRepository
+) {
+    operator fun invoke(): Flow<List<Barber>> = repository.getBarbers()
+}
+
 class GetBookingConfigUseCase @Inject constructor(
     private val repository: SalonRepository
 ) {

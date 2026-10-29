@@ -12,4 +12,5 @@ interface FirebaseServiceEntryPoint {
     fun getFcmTokenManager(): FcmTokenManager
     fun getAnalyticsHelper(): AnalyticsHelper
     fun getCrashlyticsHelper(): CrashlyticsHelper
+    fun getUserPreferencesRepository(): com.almalika.salon.data.local.preferences.UserPreferencesRepository
 }

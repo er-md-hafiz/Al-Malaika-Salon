@@ -45,6 +45,24 @@ class AlMalaikaFirebaseMessagingService : FirebaseMessagingService() {
     override fun onMessageReceived(remoteMessage: RemoteMessage) {
         super.onMessageReceived(remoteMessage)
 
+        // Check if user turned notifications OFF in Preferences / SharedPreferences
+        try {
+            val entryPoint = EntryPointAccessors.fromApplication(
+                applicationContext,
+                FirebaseServiceEntryPoint::class.java
+            )
+            if (!entryPoint.getUserPreferencesRepository().isNotificationsEnabledSync()) {
+                entryPoint.getCrashlyticsHelper().log("Notification dropped: user disabled notifications")
+                return
+            }
+        } catch (_: Exception) {
+            // If entry point resolution fails, fallback to shared preferences directly
+            val sp = applicationContext.getSharedPreferences("user_preferences", Context.MODE_PRIVATE)
+            if (!sp.getBoolean("notifications_enabled", true)) {
+                return
+            }
+        }
+
         // Ensure Notification Channels are created on Android 8+
         NotificationChannels.createChannels(applicationContext)
 

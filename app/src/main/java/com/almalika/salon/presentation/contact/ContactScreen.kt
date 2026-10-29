@@ -6,6 +6,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
+import androidx.compose.material.icons.automirrored.filled.Chat
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
@@ -75,8 +76,8 @@ fun ContactScreen(
                 ContactActionTile(
                     title = "WhatsApp Chat",
                     subtitle = "Instant replies for booking and inquiries",
-                    icon = Icons.Default.Chat,
-                    tint = Color(0xFF25D366),
+                    icon = Icons.AutoMirrored.Filled.Chat,
+                    tint = MaterialTheme.colorScheme.primary,
                     onClick = { onAction(AppAction.WhatsApp(contact.whatsapp)) }
                 )
             }
@@ -88,7 +89,7 @@ fun ContactScreen(
                     title = "Google Maps",
                     subtitle = master.salon.address,
                     icon = Icons.Default.Place,
-                    tint = Color(0xFFEA4335),
+                    tint = MaterialTheme.colorScheme.secondary,
                     onClick = { onAction(AppAction.OpenMap(contact.googleMaps)) }
                 )
             }
@@ -100,7 +101,7 @@ fun ContactScreen(
                     title = "Instagram",
                     subtitle = "Follow our recent haircuts & bridal styles",
                     icon = Icons.Default.PhotoCamera,
-                    tint = Color(0xFFE1306C),
+                    tint = MaterialTheme.colorScheme.primary,
                     onClick = { onAction(AppAction.OpenUrl(contact.instagram, "Instagram")) }
                 )
             }
@@ -112,7 +113,7 @@ fun ContactScreen(
                     title = "Facebook",
                     subtitle = "Connect on our official page",
                     icon = Icons.Default.ThumbUp,
-                    tint = Color(0xFF1877F2),
+                    tint = MaterialTheme.colorScheme.secondary,
                     onClick = { onAction(AppAction.OpenUrl(contact.facebook, "Facebook")) }
                 )
             }
@@ -124,7 +125,7 @@ fun ContactScreen(
                     title = "YouTube",
                     subtitle = "Watch styling guides & video transformations",
                     icon = Icons.Default.VideoLibrary,
-                    tint = Color(0xFFFF0000),
+                    tint = MaterialTheme.colorScheme.error,
                     onClick = { onAction(AppAction.OpenUrl(contact.youtube, "YouTube")) }
                 )
             }

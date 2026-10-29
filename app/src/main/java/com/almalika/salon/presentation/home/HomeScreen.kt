@@ -409,8 +409,9 @@ fun HomeServiceCard(service: SalonService, onClick: () -> Unit) {
                     overflow = TextOverflow.Ellipsis
                 )
                 Spacer(modifier = Modifier.height(4.dp))
+                val formattedPrice = com.almalika.salon.core.currency.CurrencyFormatter.format(service.price)
                 Text(
-                    text = "₹${service.price.toInt()}",
+                    text = formattedPrice,
                     style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.Bold),
                     color = MaterialTheme.colorScheme.primary
                 )

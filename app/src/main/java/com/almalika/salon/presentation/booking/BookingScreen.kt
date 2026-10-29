@@ -86,6 +86,17 @@ fun BookingScreen(
                     )
                 }
 
+                if (data.showBarberPicker && data.barbers.size > 1) {
+                    item {
+                        DropdownSelectorField(
+                            label = "Select Stylist / Barber",
+                            options = data.barbers.map { it.name },
+                            selectedOption = formData["barber"].orEmpty().ifBlank { data.barbers.firstOrNull()?.name.orEmpty() },
+                            onOptionSelected = { viewModel.updateField("barber", it) }
+                        )
+                    }
+                }
+
                 item {
                     Spacer(modifier = Modifier.height(10.dp))
                     Button(
@@ -98,13 +109,11 @@ fun BookingScreen(
                         modifier = Modifier
                             .fillMaxWidth()
                             .height(52.dp),
-                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF25D366)),
                         shape = RoundedCornerShape(24.dp)
                     ) {
                         Text(
                             text = "Confirm Booking on WhatsApp",
-                            style = MaterialTheme.typography.titleMedium,
-                            color = Color.White
+                            style = MaterialTheme.typography.titleMedium
                         )
                     }
                 }

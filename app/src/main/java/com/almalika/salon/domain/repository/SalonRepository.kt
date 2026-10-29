@@ -11,6 +11,7 @@ interface SalonRepository {
     fun getReviews(): Flow<List<Review>>
     fun getGalleryImages(): Flow<List<GalleryImage>>
     fun getBranches(): Flow<List<Branch>>
+    fun getBarbers(): Flow<List<Barber>>
     fun getBookingConfig(): Flow<BookingConfig>
     fun getHomeServiceConfig(): Flow<BookingConfig>
 

@@ -34,6 +34,8 @@ fun GalleryScreen(
 
     var activeImageForPreview by remember { mutableStateOf<GalleryImage?>(null) }
 
+    // Category tabs driven by GalleryViewModel; "all" always shows every item.
+    // Additional categories become functional once gallery items carry a categoryId.
     val categories = listOf(
         Pair("all", "All Works"),
         Pair("hair", "Hair"),
@@ -42,7 +44,7 @@ fun GalleryScreen(
     )
 
     Column(modifier = modifier.fillMaxSize()) {
-        // Categories Tabs
+        // Category filter tabs
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -86,7 +88,7 @@ fun GalleryScreen(
                 if (images.isEmpty()) {
                     EmptyView(
                         title = "No gallery images found",
-                        subtitle = "Select another category to view salon transformations."
+                        subtitle = "Check back soon for our latest salon transformations."
                     )
                 } else {
                     LazyVerticalGrid(
@@ -101,7 +103,10 @@ fun GalleryScreen(
                                 modifier = Modifier
                                     .fillMaxWidth()
                                     .height(160.dp)
-                                    .clickable { activeImageForPreview = image },
+                                    .clickable {
+                                        activeImageForPreview = image
+                                        onAction(AppAction.OpenGalleryImage(image.id))
+                                    },
                                 shape = RoundedCornerShape(14.dp)
                             ) {
                                 AsyncImage(
@@ -118,7 +123,7 @@ fun GalleryScreen(
         }
     }
 
-    // Full Screen Zoom/Preview Dialog
+    // Full-screen preview dialog
     if (activeImageForPreview != null) {
         val image = activeImageForPreview!!
         Dialog(onDismissRequest = { activeImageForPreview = null }) {

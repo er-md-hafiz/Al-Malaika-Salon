@@ -161,7 +161,11 @@ class AuthViewModel @Inject constructor(
         }
     }
 
-    fun sendSignInLinkToEmail(email: String, url: String) {
+    fun sendSignInLinkToEmail(
+        email: String,
+        url: String = "https://almalaika-salon.firebaseapp.com/__/auth/action",
+        onSuccess: () -> Unit = {}
+    ) {
         val trimmed = email.trim()
         if (trimmed.isBlank() || !isValidEmail(trimmed)) {
             _loginState.value = AuthActionState.Error("Please enter a valid email address")
@@ -172,6 +176,7 @@ class AuthViewModel @Inject constructor(
             authRepository.sendSignInLinkToEmail(trimmed, url)
                 .onSuccess {
                     _loginState.value = AuthActionState.Success("Sign-in link sent! Please check your email.")
+                    onSuccess()
                 }
                 .onFailure { error ->
                     _loginState.value = AuthActionState.Error(error.message ?: "Failed to send sign-in link")

@@ -41,12 +41,30 @@ class MainViewModel @Inject constructor(
         }
     }
 
+    val themeMode: StateFlow<String> = userPreferencesRepository.themeMode
+        .stateIn(viewModelScope, SharingStarted.Eagerly, com.almalika.salon.data.local.preferences.UserPreferencesRepository.THEME_AUTO)
+
+    fun setThemeMode(mode: String) {
+        viewModelScope.launch {
+            userPreferencesRepository.setThemeMode(mode)
+        }
+    }
+
     val isDarkMode: StateFlow<Boolean?> = userPreferencesRepository.isDarkMode
         .stateIn(viewModelScope, SharingStarted.Eagerly, null)
 
     fun setDarkMode(enabled: Boolean) {
         viewModelScope.launch {
             userPreferencesRepository.setDarkMode(enabled)
+        }
+    }
+
+    val isNotificationsEnabled: StateFlow<Boolean> = userPreferencesRepository.isNotificationsEnabled
+        .stateIn(viewModelScope, SharingStarted.Eagerly, true)
+
+    fun setNotificationsEnabled(enabled: Boolean) {
+        viewModelScope.launch {
+            userPreferencesRepository.setNotificationsEnabled(enabled)
         }
     }
 

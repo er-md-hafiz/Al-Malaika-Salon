@@ -14,7 +14,9 @@ data class BookingScreenData(
     val config: BookingConfig,
     val masterConfig: SalonMasterConfig,
     val branches: List<Branch>,
-    val services: List<SalonService>
+    val services: List<SalonService>,
+    val barbers: List<Barber>,
+    val showBarberPicker: Boolean
 )
 
 @HiltViewModel
@@ -23,6 +25,7 @@ class BookingViewModel @Inject constructor(
     private val getMasterConfigUseCase: GetMasterConfigUseCase,
     private val getLocationsUseCase: GetLocationsUseCase,
     private val getServicesUseCase: GetServicesUseCase,
+    private val getBarbersUseCase: GetBarbersUseCase,
     private val formatWhatsAppMessageUseCase: FormatWhatsAppMessageUseCase
 ) : ViewModel() {
 
@@ -42,10 +45,21 @@ class BookingViewModel @Inject constructor(
                 getBookingConfigUseCase(),
                 getMasterConfigUseCase(),
                 getLocationsUseCase(),
-                getServicesUseCase()
-            ) { config, master, branches, categories ->
+                getServicesUseCase(),
+                getBarbersUseCase()
+            ) { config, master, branches, categories, barbers ->
                 val allServices = categories.flatMap { it.services }
-                BookingScreenData(config, master, branches, allServices)
+                val barberFlag = master.featureFlags["barberSelection"] ?: false
+                // Rule 6: If barbers.size <= 1, hide the barber picker step in booking regardless of the flag
+                val showPicker = barberFlag && barbers.size > 1
+                BookingScreenData(
+                    config = config,
+                    masterConfig = master,
+                    branches = branches,
+                    services = allServices,
+                    barbers = barbers,
+                    showBarberPicker = showPicker
+                )
             }
                 .catch { e ->
                     _uiState.value = UiState.Error(e.message ?: "Failed to initialize booking")

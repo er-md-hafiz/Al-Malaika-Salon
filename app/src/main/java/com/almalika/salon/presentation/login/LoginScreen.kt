@@ -143,45 +143,48 @@ fun LoginScreen(
         Spacer(modifier = Modifier.height(16.dp))
 
         // Password Field
-        OutlinedTextField(
-            value = password,
-            onValueChange = {
-                password = it
-                if (loginState is AuthActionState.Error) viewModel.clearLoginState()
-            },
-            label = { Text("Password") },
-            placeholder = { Text("Enter your password") },
-            leadingIcon = {
-                Icon(imageVector = Icons.Default.Lock, contentDescription = "Password icon")
-            },
-            trailingIcon = {
-                IconButton(onClick = { passwordVisible = !passwordVisible }) {
-                    Icon(
-                        imageVector = if (passwordVisible) Icons.Default.VisibilityOff else Icons.Default.Visibility,
-                        contentDescription = if (passwordVisible) "Hide password" else "Show password"
-                    )
-                }
-            },
-            visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
-            keyboardOptions = KeyboardOptions(
-                keyboardType = KeyboardType.Password,
-                imeAction = ImeAction.Done
-            ),
-            keyboardActions = KeyboardActions(
-                onDone = {
-                    focusManager.clearFocus()
-                    if (!isLoading) {
-                        viewModel.signInWithEmail(email, password, onLoginSuccess)
+        // Password Field (only shown if showPasswordLogin == true)
+        if (config.showPasswordLogin) {
+            OutlinedTextField(
+                value = password,
+                onValueChange = {
+                    password = it
+                    if (loginState is AuthActionState.Error) viewModel.clearLoginState()
+                },
+                label = { Text("Password") },
+                placeholder = { Text("Enter your password") },
+                leadingIcon = {
+                    Icon(imageVector = Icons.Default.Lock, contentDescription = "Password icon")
+                },
+                trailingIcon = {
+                    IconButton(onClick = { passwordVisible = !passwordVisible }) {
+                        Icon(
+                            imageVector = if (passwordVisible) Icons.Default.VisibilityOff else Icons.Default.Visibility,
+                            contentDescription = if (passwordVisible) "Hide password" else "Show password"
+                        )
                     }
-                }
-            ),
-            singleLine = true,
-            enabled = !isLoading,
-            modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(16.dp)
-        )
+                },
+                visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
+                keyboardOptions = KeyboardOptions(
+                    keyboardType = KeyboardType.Password,
+                    imeAction = ImeAction.Done
+                ),
+                keyboardActions = KeyboardActions(
+                    onDone = {
+                        focusManager.clearFocus()
+                        if (!isLoading) {
+                            viewModel.signInWithEmail(email, password, onLoginSuccess)
+                        }
+                    }
+                ),
+                singleLine = true,
+                enabled = !isLoading,
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(16.dp)
+            )
+        }
 
-        if (config.showForgotPassword) {
+        if (config.showPasswordLogin && config.showForgotPassword) {
             Spacer(modifier = Modifier.height(8.dp))
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -204,11 +207,27 @@ fun LoginScreen(
 
         Spacer(modifier = Modifier.height(12.dp))
 
-        // Sign In Button
+        // Dynamic Primary Action: Passwordless Email Link vs Password Sign In
+        val isEmailLinkMode = config.authMode.equals("firebase_email_link", ignoreCase = true) || !config.showPasswordLogin
+        val primaryButtonText = if (isEmailLinkMode) {
+            config.emailLinkButtonText.ifBlank { "Send Sign-In Link" }
+        } else {
+            config.loginButtonText.ifBlank { config.loginButtonLabel }.ifBlank { "Sign In" }
+        }
+
         Button(
             onClick = {
                 focusManager.clearFocus()
-                viewModel.signInWithEmail(email, password, onLoginSuccess)
+                if (isEmailLinkMode) {
+                    viewModel.sendSignInLinkToEmail(
+                        email = email,
+                        onSuccess = {
+                            // Link sent successfully
+                        }
+                    )
+                } else {
+                    viewModel.signInWithEmail(email, password, onLoginSuccess)
+                }
             },
             enabled = !isLoading,
             modifier = Modifier
@@ -224,7 +243,7 @@ fun LoginScreen(
                 )
             } else {
                 Text(
-                    text = config.loginButtonText.ifBlank { config.loginButtonLabel }.ifBlank { "Sign In" },
+                    text = primaryButtonText,
                     fontSize = 16.sp,
                     fontWeight = FontWeight.Bold
                 )

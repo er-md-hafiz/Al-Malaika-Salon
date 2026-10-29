@@ -36,27 +36,43 @@ fun SplashScreen(
     val scale = remember { Animatable(0.7f) }
     val alpha = remember { Animatable(0f) }
 
-    val bgColor = remember(config.backgroundColor) {
-        try {
-            Color(android.graphics.Color.parseColor(config.backgroundColor))
-        } catch (_: Exception) {
-            Color(0xFF121212)
+    val defaultBg = MaterialTheme.colorScheme.background
+    val defaultText = MaterialTheme.colorScheme.onBackground
+    val defaultAccent = MaterialTheme.colorScheme.primary
+
+    val bgColor = remember(config.backgroundColor, defaultBg) {
+        if (!config.backgroundColor.isNullOrBlank()) {
+            try {
+                Color(android.graphics.Color.parseColor(config.backgroundColor.trim()))
+            } catch (_: Exception) {
+                defaultBg
+            }
+        } else {
+            defaultBg
         }
     }
 
-    val textColor = remember(config.textColor) {
-        try {
-            Color(android.graphics.Color.parseColor(config.textColor))
-        } catch (_: Exception) {
-            Color(0xFFFFFFFF)
+    val textColor = remember(config.textColor, defaultText) {
+        if (!config.textColor.isNullOrBlank()) {
+            try {
+                Color(android.graphics.Color.parseColor(config.textColor.trim()))
+            } catch (_: Exception) {
+                defaultText
+            }
+        } else {
+            defaultText
         }
     }
 
-    val accentColor = remember(config.accentColor) {
-        try {
-            Color(android.graphics.Color.parseColor(config.accentColor))
-        } catch (_: Exception) {
-            Color(0xFFD4AF37)
+    val accentColor = remember(config.accentColor, defaultAccent) {
+        if (!config.accentColor.isNullOrBlank()) {
+            try {
+                Color(android.graphics.Color.parseColor(config.accentColor.trim()))
+            } catch (_: Exception) {
+                defaultAccent
+            }
+        } else {
+            defaultAccent
         }
     }
 

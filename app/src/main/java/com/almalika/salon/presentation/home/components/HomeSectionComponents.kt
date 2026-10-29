@@ -42,7 +42,7 @@ import com.almalika.salon.core.action.AppAction
 import com.almalika.salon.domain.model.HomeBanner
 import com.almalika.salon.domain.model.HomeSection
 import com.almalika.salon.domain.model.SalonMasterConfig
-import com.almalika.salon.presentation.theme.GoldPrimary
+import com.almalika.salon.presentation.theme.DefaultGoldPrimary
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
@@ -192,7 +192,7 @@ fun HeroBannerSection(
                             .width(width)
                             .clip(CircleShape)
                             .background(
-                                if (isSelected) GoldPrimary else Color.White.copy(alpha = 0.45f)
+                                if (isSelected) MaterialTheme.colorScheme.primary else Color.White.copy(alpha = 0.45f)
                             )
                             .clickable {
                                 coroutineScope.launch {
@@ -219,7 +219,7 @@ private fun BannerItemCard(
             .fillMaxSize()
             .clickable(onClick = onClick),
         shape = RoundedCornerShape(20.dp),
-        colors = CardDefaults.cardColors(containerColor = Color(0xFF18181B)),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
         elevation = CardDefaults.cardElevation(defaultElevation = 6.dp)
     ) {
         Box(modifier = Modifier.fillMaxSize()) {
@@ -258,8 +258,8 @@ private fun BannerItemCard(
                         .padding(start = 16.dp, top = 16.dp)
                         .align(Alignment.TopStart),
                     shape = RoundedCornerShape(12.dp),
-                    color = GoldPrimary.copy(alpha = 0.92f),
-                    contentColor = Color.Black
+                    color = MaterialTheme.colorScheme.primary.copy(alpha = 0.92f),
+                    contentColor = MaterialTheme.colorScheme.onPrimary
                 ) {
                     Text(
                         text = banner.category.uppercase(),

@@ -7,6 +7,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.Logout
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -38,7 +39,7 @@ fun AccountScreen(
         AlertDialog(
             onDismissRequest = { showSignOutDialog = false },
             title = { Text("Sign Out") },
-            text = { Text("Are you sure you want to sign out of your Al-Malaika account?") },
+            text = { Text("Are you sure you want to sign out of your ${master.salon.name} account?") },
             confirmButton = {
                 Button(
                     onClick = {
@@ -349,7 +350,7 @@ fun AccountScreen(
                                     contentColor = MaterialTheme.colorScheme.error
                                 )
                             ) {
-                                Icon(imageVector = Icons.Default.Logout, contentDescription = null)
+                                Icon(imageVector = Icons.AutoMirrored.Filled.Logout, contentDescription = null)
                                 Spacer(modifier = Modifier.width(8.dp))
                                 Text("Sign Out", fontWeight = FontWeight.Bold)
                             }

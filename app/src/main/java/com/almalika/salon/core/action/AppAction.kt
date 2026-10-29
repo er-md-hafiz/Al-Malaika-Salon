@@ -9,6 +9,7 @@ sealed interface AppAction {
     data object HomeService : AppAction
     data object Gallery : AppAction
     data object Locations : AppAction
+    data object Franchise : AppAction
     data object About : AppAction
     data object Contact : AppAction
     data object Settings : AppAction
