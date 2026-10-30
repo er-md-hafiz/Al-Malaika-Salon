@@ -171,6 +171,54 @@ fun DynamicFormField(
             )
         }
 
+        BookingFieldType.PHONE -> {
+            val phoneValidation = remember(currentValue) {
+                if (currentValue.isBlank()) null else com.almalika.salon.core.util.ContactValidator.validateIndianMobileNumber(currentValue)
+            }
+            val hasPhoneError = phoneValidation is com.almalika.salon.core.util.InputValidationResult.Invalid && currentValue.length >= 10
+
+            OutlinedTextField(
+                value = currentValue,
+                onValueChange = onValueChange,
+                label = { Text(field.label) },
+                placeholder = { Text(field.placeholder.ifBlank { "Enter 10-digit mobile number" }) },
+                isError = hasPhoneError,
+                supportingText = if (hasPhoneError) {
+                    { Text("Please enter a valid 10-digit mobile number", color = MaterialTheme.colorScheme.error) }
+                } else null,
+                keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(
+                    keyboardType = androidx.compose.ui.text.input.KeyboardType.Phone
+                ),
+                modifier = Modifier.fillMaxWidth(),
+                singleLine = true,
+                shape = RoundedCornerShape(12.dp)
+            )
+        }
+
+        BookingFieldType.EMAIL -> {
+            val emailValidation = remember(currentValue) {
+                if (currentValue.isBlank()) null else com.almalika.salon.core.util.ContactValidator.validateEmail(currentValue)
+            }
+            val hasEmailError = emailValidation is com.almalika.salon.core.util.InputValidationResult.Invalid && currentValue.contains("@") && currentValue.length > 5
+
+            OutlinedTextField(
+                value = currentValue,
+                onValueChange = onValueChange,
+                label = { Text(field.label) },
+                placeholder = { Text(field.placeholder.ifBlank { "your.email@example.com" }) },
+                isError = hasEmailError,
+                supportingText = if (hasEmailError) {
+                    { Text("Please enter a valid email format", color = MaterialTheme.colorScheme.error) }
+                } else null,
+                keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(
+                    keyboardType = androidx.compose.ui.text.input.KeyboardType.Email
+                ),
+                modifier = Modifier.fillMaxWidth(),
+                singleLine = true,
+                shape = RoundedCornerShape(12.dp)
+            )
+        }
+
         else -> {
             OutlinedTextField(
                 value = currentValue,

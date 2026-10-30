@@ -25,7 +25,8 @@ data class SalonMasterConfig(
     val theme: ThemeConfig = ThemeConfig(),
     val pages: Map<String, String> = emptyMap(),
     val screens: List<ScreenSpec> = emptyList(),
-    val remoteConfig: RemoteConfig = RemoteConfig()
+    val remoteConfig: RemoteConfig = RemoteConfig(),
+    val whyChooseUs: List<WhyChooseUsItem> = emptyList()
 )
 
 data class ScreenSpec(
@@ -365,6 +366,8 @@ enum class SectionType {
     BANNER,
     REVIEWS,
     SPACER,
+    FEATURE_GRID,
+    FRANCHISE_BANNER,
     UNKNOWN
 }
 
@@ -392,7 +395,14 @@ data class HomeSection(
     val enabled: Boolean,
     val order: Int,
     val banners: List<HomeBanner> = emptyList(),
-    val autoSlideIntervalMs: Long = 4000L
+    val autoSlideIntervalMs: Long = 4000L,
+    val dataSource: String? = null,
+    val showViewAll: Boolean = true,
+    val viewAllDestination: String? = null,
+    val hideWhenEmpty: Boolean = false,
+    val hideWhenDisabled: Boolean = false,
+    val showAddress: Boolean = false,
+    val showOpeningHours: Boolean = false
 )
 
 data class ServiceCategory(
@@ -449,9 +459,11 @@ data class Offer(
         }
 }
 
-data class GalleryCategory(
+data class WhyChooseUsItem(
     val id: String,
-    val name: String
+    val title: String,
+    val description: String,
+    val icon: String
 )
 
 data class GalleryImage(

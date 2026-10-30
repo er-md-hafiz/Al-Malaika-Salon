@@ -8,6 +8,7 @@ plugins {
     alias(libs.plugins.google.services)
     alias(libs.plugins.firebase.crashlytics)
     alias(libs.plugins.firebase.perf)
+    alias(libs.plugins.kotlin.serialization)
     kotlin("kapt")
 }
 
@@ -126,6 +127,7 @@ dependencies {
     // Coil & Coroutines
     implementation(libs.coil.compose)
     implementation(libs.kotlinx.coroutines.android)
+    implementation(libs.kotlinx.serialization.json)
 
     // DataStore & WorkManager & Play Review
     implementation(libs.androidx.datastore.preferences)

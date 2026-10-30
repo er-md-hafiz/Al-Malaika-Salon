@@ -257,7 +257,12 @@ data class HomeSectionConfigDto(
     @Json(name = "itemsToShow") val itemsToShow: Int? = null,
     @Json(name = "maxItems") val maxItems: Int? = null,
     @Json(name = "dataSource") val dataSource: String? = null,
+    @Json(name = "showViewAll") val showViewAll: Boolean? = null,
     @Json(name = "viewAllDestination") val viewAllDestination: String? = null,
+    @Json(name = "hideWhenEmpty") val hideWhenEmpty: Boolean? = null,
+    @Json(name = "hideWhenDisabled") val hideWhenDisabled: Boolean? = null,
+    @Json(name = "showAddress") val showAddress: Boolean? = null,
+    @Json(name = "showOpeningHours") val showOpeningHours: Boolean? = null,
     @Json(name = "action") val action: HomeSectionActionDto? = null,
     @Json(name = "itemAction") val itemAction: HomeSectionActionDto? = null,
     @Json(name = "autoSlideIntervalMs") val autoSlideIntervalMs: Long? = 4000L,
@@ -341,6 +346,13 @@ data class MenuItemServiceDto(
 )
 
 @JsonClass(generateAdapter = true)
+data class TimeSlotDto(
+    @Json(name = "id") val id: Any? = null,
+    @Json(name = "time") val time: String? = null,
+    @Json(name = "isAvailable") val isAvailable: Boolean? = true
+)
+
+@JsonClass(generateAdapter = true)
 data class HomeServiceBookingDto(
     @Json(name = "enabled") val enabled: Boolean? = false,
     @Json(name = "minimumBookingAmount") val minimumBookingAmount: Double? = null,
@@ -349,7 +361,7 @@ data class HomeServiceBookingDto(
     @Json(name = "advanceBookingHours") val advanceBookingHours: Int? = null,
     @Json(name = "bookingMessage") val bookingMessage: String? = null,
     @Json(name = "availableDays") val availableDays: List<String>? = null,
-    @Json(name = "timeSlots") val timeSlots: List<String>? = null
+    @Json(name = "timeSlots") val timeSlots: List<Any>? = null
 )
 
 @JsonClass(generateAdapter = true)
@@ -372,6 +384,10 @@ data class RemoteOfferDto(
     @Json(name = "discountType") val discountType: String? = null,
     @Json(name = "validFrom") val validFrom: String? = null,
     @Json(name = "validTill") val validTill: String? = null,
+    @Json(name = "validUntil") val validUntil: String? = null,
+    @Json(name = "price") val price: Any? = null,
+    @Json(name = "originalPrice") val originalPrice: Any? = null,
+    @Json(name = "badge") val badge: String? = null,
     @Json(name = "terms") val terms: String? = null,
     @Json(name = "ctaText") val ctaText: String? = null,
     @Json(name = "ctaAction") val ctaAction: String? = null,
@@ -382,6 +398,7 @@ data class RemoteOfferDto(
 data class ReviewDto(
     @Json(name = "id") val id: Any? = null,
     @Json(name = "author") val author: String? = null,
+    @Json(name = "customerName") val customerName: String? = null,
     @Json(name = "rating") val rating: Double? = null,
     @Json(name = "comment") val comment: String? = null,
     @Json(name = "reviewText") val reviewText: String? = null,
@@ -404,7 +421,10 @@ data class RemoteGalleryItemDto(
     @Json(name = "id") val id: Any? = null,
     @Json(name = "imageUrl") val imageUrl: String? = null,
     @Json(name = "title") val title: String? = null,
-    @Json(name = "aspectRatio") val aspectRatio: Double? = null
+    @Json(name = "description") val description: String? = null,
+    @Json(name = "category") val category: String? = null,
+    @Json(name = "aspectRatio") val aspectRatio: Double? = null,
+    @Json(name = "isAvailable") val isAvailable: Boolean? = true
 )
 
 @JsonClass(generateAdapter = true)

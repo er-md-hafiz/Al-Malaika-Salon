@@ -11,10 +11,13 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Email
 import androidx.compose.material.icons.filled.Lock
+import androidx.compose.material.icons.filled.Phone
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import com.almalika.salon.core.util.ContactValidator
+import com.almalika.salon.core.util.InputType
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -115,24 +118,67 @@ fun LoginScreen(
             }
         }
 
-        // Email Field
+        // Detected Input Type & Dynamic Presentation
+        val detectedType = remember(email) { ContactValidator.detectInputType(email) }
+        val isEmailLinkMode = config.authMode.equals("firebase_email_link", ignoreCase = true) || !config.showPasswordLogin
+        val isPhoneInput = detectedType == InputType.PHONE
+
+        val inputLabel = when {
+            isPhoneInput && !config.showPhoneLogin -> "Email Address (Mobile login unavailable)"
+            detectedType == InputType.PHONE -> "Mobile Number"
+            detectedType == InputType.EMAIL -> "Email Address"
+            config.showPhoneLogin -> "Email Address or Mobile Number"
+            else -> "Email Address"
+        }
+        val inputPlaceholder = when {
+            isPhoneInput && !config.showPhoneLogin -> "Please enter your email instead"
+            detectedType == InputType.PHONE -> config.phonePlaceholder.ifBlank { "Enter 10-digit mobile number" }
+            config.showPhoneLogin -> "your.email@example.com or 9876543210"
+            else -> "your.email@example.com"
+        }
+        val leadingIconVector = when (detectedType) {
+            InputType.PHONE -> Icons.Default.Phone
+            else -> Icons.Default.Email
+        }
+        val keyboardType = when (detectedType) {
+            InputType.PHONE -> KeyboardType.Phone
+            InputType.EMAIL -> KeyboardType.Email
+            else -> if (config.showPhoneLogin) KeyboardType.Text else KeyboardType.Email
+        }
+
+        // Inline guidance if phone number entered in email-only mode
+        val showPhoneWarningInline = isPhoneInput && !config.showPhoneLogin && isEmailLinkMode
+
+        // Identifier (Email or Phone) Field
         OutlinedTextField(
             value = email,
             onValueChange = {
                 email = it
                 if (loginState is AuthActionState.Error) viewModel.clearLoginState()
             },
-            label = { Text("Email Address") },
-            placeholder = { Text("your.email@example.com") },
+            label = { Text(inputLabel) },
+            placeholder = { Text(inputPlaceholder) },
+            isError = showPhoneWarningInline,
+            supportingText = if (showPhoneWarningInline) {
+                {
+                    Text(
+                        text = "Sign-in links are sent via email. Please enter your email address.",
+                        color = MaterialTheme.colorScheme.error
+                    )
+                }
+            } else null,
             leadingIcon = {
-                Icon(imageVector = Icons.Default.Email, contentDescription = "Email icon")
+                Icon(imageVector = leadingIconVector, contentDescription = inputLabel)
             },
             keyboardOptions = KeyboardOptions(
-                keyboardType = KeyboardType.Email,
-                imeAction = ImeAction.Next
+                keyboardType = keyboardType,
+                imeAction = if (config.showPasswordLogin) ImeAction.Next else ImeAction.Done
             ),
             keyboardActions = KeyboardActions(
-                onNext = { focusManager.moveFocus(FocusDirection.Down) }
+                onNext = { focusManager.moveFocus(FocusDirection.Down) },
+                onDone = {
+                    focusManager.clearFocus()
+                }
             ),
             singleLine = true,
             enabled = !isLoading,
@@ -208,12 +254,13 @@ fun LoginScreen(
         Spacer(modifier = Modifier.height(12.dp))
 
         // Dynamic Primary Action: Passwordless Email Link vs Password Sign In
-        val isEmailLinkMode = config.authMode.equals("firebase_email_link", ignoreCase = true) || !config.showPasswordLogin
         val primaryButtonText = if (isEmailLinkMode) {
             config.emailLinkButtonText.ifBlank { "Send Sign-In Link" }
         } else {
             config.loginButtonText.ifBlank { config.loginButtonLabel }.ifBlank { "Sign In" }
         }
+
+        val isSubmitDisabled = isLoading || (isEmailLinkMode && isPhoneInput && !config.showPhoneLogin)
 
         Button(
             onClick = {
@@ -229,7 +276,7 @@ fun LoginScreen(
                     viewModel.signInWithEmail(email, password, onLoginSuccess)
                 }
             },
-            enabled = !isLoading,
+            enabled = !isSubmitDisabled,
             modifier = Modifier
                 .fillMaxWidth()
                 .height(52.dp),

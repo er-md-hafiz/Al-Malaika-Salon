@@ -15,6 +15,8 @@ import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import com.almalika.salon.core.util.ContactValidator
+import com.almalika.salon.core.util.InputValidationResult
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusDirection
@@ -133,6 +135,11 @@ fun RegisterScreen(
 
         // Email Field
         if (config.showEmail) {
+            val emailValidation = remember(email) {
+                if (email.isBlank()) null else ContactValidator.validateEmail(email)
+            }
+            val hasEmailFormatError = emailValidation is InputValidationResult.Invalid && email.contains("@") && email.length > 5
+
             OutlinedTextField(
                 value = email,
                 onValueChange = {
@@ -141,6 +148,10 @@ fun RegisterScreen(
                 },
                 label = { Text("Email Address") },
                 placeholder = { Text("your.email@example.com") },
+                isError = hasEmailFormatError,
+                supportingText = if (hasEmailFormatError) {
+                    { Text("Please enter a valid email format", color = MaterialTheme.colorScheme.error) }
+                } else null,
                 leadingIcon = {
                     Icon(imageVector = Icons.Default.Email, contentDescription = "Email icon")
                 },

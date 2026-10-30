@@ -56,19 +56,22 @@ class AuthViewModel @Inject constructor(
     private val _accountActionState = MutableStateFlow<AuthActionState>(AuthActionState.Idle)
     val accountActionState: StateFlow<AuthActionState> = _accountActionState.asStateFlow()
 
-    private val emailPattern = Regex("^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}\$")
-
-    private fun isValidEmail(email: String): Boolean = emailPattern.matches(email)
+    private fun isValidEmail(email: String): Boolean =
+        com.almalika.salon.core.util.ContactValidator.isValidEmail(email)
 
     fun signInWithEmail(email: String, password: String, onSuccess: () -> Unit = {}) {
-        val trimmedEmail = email.trim()
-        if (trimmedEmail.isBlank()) {
-            _loginState.value = AuthActionState.Error("Please enter your email address")
-            return
-        }
-        if (!isValidEmail(trimmedEmail)) {
-            _loginState.value = AuthActionState.Error("Please enter a valid email address")
-            return
+        val validation = com.almalika.salon.core.util.ContactValidator.validateIdentifier(email)
+        val normalizedEmail: String = when (validation) {
+            is com.almalika.salon.core.util.InputValidationResult.ValidEmail -> validation.normalizedEmail
+            is com.almalika.salon.core.util.InputValidationResult.ValidPhone -> {
+                // Phone authentication is not supported for email/password auth mode
+                _loginState.value = AuthActionState.Error(com.almalika.salon.core.util.ValidationError.PHONE_AUTH_DISABLED.defaultMessage)
+                return
+            }
+            is com.almalika.salon.core.util.InputValidationResult.Invalid -> {
+                _loginState.value = AuthActionState.Error(validation.error.defaultMessage)
+                return
+            }
         }
         if (password.isBlank()) {
             _loginState.value = AuthActionState.Error("Please enter your password")
@@ -81,7 +84,7 @@ class AuthViewModel @Inject constructor(
 
         viewModelScope.launch {
             _loginState.value = AuthActionState.Loading
-            authRepository.signInWithEmail(trimmedEmail, password)
+            authRepository.signInWithEmail(normalizedEmail, password)
                 .onSuccess {
                     _loginState.value = AuthActionState.Success("Sign in successful")
                     onSuccess()
@@ -123,9 +126,13 @@ class AuthViewModel @Inject constructor(
             _registerState.value = AuthActionState.Error("Please enter your full name")
             return
         }
-        if (trimmedEmail.isBlank() || !isValidEmail(trimmedEmail)) {
-            _registerState.value = AuthActionState.Error("Please enter a valid email address")
-            return
+        val emailValidation = com.almalika.salon.core.util.ContactValidator.validateEmail(trimmedEmail)
+        val normalizedEmail = when (emailValidation) {
+            is com.almalika.salon.core.util.InputValidationResult.ValidEmail -> emailValidation.normalizedEmail
+            else -> {
+                _registerState.value = AuthActionState.Error("Please enter a valid email address")
+                return
+            }
         }
         if (password.length < 6) {
             _registerState.value = AuthActionState.Error("Password must be at least 6 characters")
@@ -145,9 +152,9 @@ class AuthViewModel @Inject constructor(
             // If user is already anonymous guest, link credentials seamlessly
             val currentUser = authRepository.currentUser
             val result = if (currentUser?.isAnonymous == true) {
-                authRepository.linkAnonymousAccount(trimmedName, trimmedEmail, password, sendVerification)
+                authRepository.linkAnonymousAccount(trimmedName, normalizedEmail, password, sendVerification)
             } else {
-                authRepository.registerWithEmail(trimmedName, trimmedEmail, password, sendVerification)
+                authRepository.registerWithEmail(trimmedName, normalizedEmail, password, sendVerification)
             }
 
             result
@@ -166,14 +173,21 @@ class AuthViewModel @Inject constructor(
         url: String = "https://almalaika-salon.firebaseapp.com/__/auth/action",
         onSuccess: () -> Unit = {}
     ) {
-        val trimmed = email.trim()
-        if (trimmed.isBlank() || !isValidEmail(trimmed)) {
-            _loginState.value = AuthActionState.Error("Please enter a valid email address")
-            return
+        val validation = com.almalika.salon.core.util.ContactValidator.validateIdentifier(email)
+        val normalizedEmail: String = when (validation) {
+            is com.almalika.salon.core.util.InputValidationResult.ValidEmail -> validation.normalizedEmail
+            is com.almalika.salon.core.util.InputValidationResult.ValidPhone -> {
+                _loginState.value = AuthActionState.Error(com.almalika.salon.core.util.ValidationError.PHONE_AUTH_DISABLED.defaultMessage)
+                return
+            }
+            is com.almalika.salon.core.util.InputValidationResult.Invalid -> {
+                _loginState.value = AuthActionState.Error(validation.error.defaultMessage)
+                return
+            }
         }
         viewModelScope.launch {
             _loginState.value = AuthActionState.Loading
-            authRepository.sendSignInLinkToEmail(trimmed, url)
+            authRepository.sendSignInLinkToEmail(normalizedEmail, url)
                 .onSuccess {
                     _loginState.value = AuthActionState.Success("Sign-in link sent! Please check your email.")
                     onSuccess()
@@ -185,14 +199,17 @@ class AuthViewModel @Inject constructor(
     }
 
     fun signInWithEmailLink(email: String, emailLink: String, onSuccess: () -> Unit = {}) {
-        val trimmed = email.trim()
-        if (trimmed.isBlank() || !isValidEmail(trimmed)) {
-            _loginState.value = AuthActionState.Error("Please enter a valid email address")
-            return
+        val emailValidation = com.almalika.salon.core.util.ContactValidator.validateEmail(email)
+        val normalizedEmail = when (emailValidation) {
+            is com.almalika.salon.core.util.InputValidationResult.ValidEmail -> emailValidation.normalizedEmail
+            else -> {
+                _loginState.value = AuthActionState.Error("Please enter a valid email address")
+                return
+            }
         }
         viewModelScope.launch {
             _loginState.value = AuthActionState.Loading
-            authRepository.signInWithEmailLink(trimmed, emailLink)
+            authRepository.signInWithEmailLink(normalizedEmail, emailLink)
                 .onSuccess {
                     _loginState.value = AuthActionState.Success("Signed in successfully")
                     onSuccess()
@@ -204,15 +221,22 @@ class AuthViewModel @Inject constructor(
     }
 
     fun sendPasswordReset(email: String) {
-        val trimmed = email.trim()
-        if (trimmed.isBlank() || !isValidEmail(trimmed)) {
-            _forgotPasswordState.value = AuthActionState.Error("Please enter a valid email address")
-            return
+        val validation = com.almalika.salon.core.util.ContactValidator.validateIdentifier(email)
+        val normalizedEmail: String = when (validation) {
+            is com.almalika.salon.core.util.InputValidationResult.ValidEmail -> validation.normalizedEmail
+            is com.almalika.salon.core.util.InputValidationResult.ValidPhone -> {
+                _forgotPasswordState.value = AuthActionState.Error("Password reset is only available for email accounts. Please enter your email address.")
+                return
+            }
+            is com.almalika.salon.core.util.InputValidationResult.Invalid -> {
+                _forgotPasswordState.value = AuthActionState.Error("Please enter a valid email address")
+                return
+            }
         }
 
         viewModelScope.launch {
             _forgotPasswordState.value = AuthActionState.Loading
-            authRepository.sendPasswordResetEmail(trimmed)
+            authRepository.sendPasswordResetEmail(normalizedEmail)
                 .onSuccess {
                     _forgotPasswordState.value = AuthActionState.Success("Password reset link sent! Check your inbox.")
                 }

@@ -112,10 +112,15 @@ class AuthValidationAndConfigTest {
         val fakeRepo = FakeAuthRepository()
         val viewModel = AuthViewModel(fakeRepo)
 
-        // Invalid email
+        // Invalid email or identifier
         viewModel.signInWithEmail("notanemail", "password123")
         assertTrue(viewModel.loginState.value is AuthActionState.Error)
-        assertEquals("Please enter a valid email address", (viewModel.loginState.value as AuthActionState.Error).message)
+        assertEquals("Please enter a valid email address or mobile number.", (viewModel.loginState.value as AuthActionState.Error).message)
+
+        // Mobile entered when phone auth is disabled
+        viewModel.signInWithEmail("9876543210", "password123")
+        assertTrue(viewModel.loginState.value is AuthActionState.Error)
+        assertEquals("Mobile login is currently unavailable. Please sign in with your email address.", (viewModel.loginState.value as AuthActionState.Error).message)
 
         // Short password (< 6 characters)
         viewModel.signInWithEmail("test@example.com", "12345")

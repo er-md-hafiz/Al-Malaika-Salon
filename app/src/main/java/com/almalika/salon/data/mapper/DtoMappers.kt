@@ -417,6 +417,15 @@ fun MenuResponseDto.toDomain(): SalonMasterConfig {
         aboutUsUrl = prof?.aboutUs.orEmpty()
     )
 
+    val whyChooseUsDomain = whyChooseUs?.map {
+        WhyChooseUsItem(
+            id = it.id?.toString().orEmpty(),
+            title = it.title.orEmpty(),
+            description = it.description.orEmpty(),
+            icon = it.icon.orEmpty()
+        )
+    } ?: emptyList()
+
     return SalonMasterConfig(
         schemaVersion = metadata?.schemaVersion?.toIntOrNull() ?: 2,
         configVersion = 1,
@@ -442,7 +451,8 @@ fun MenuResponseDto.toDomain(): SalonMasterConfig {
         theme = theme?.toDomain() ?: ThemeConfig(),
         pages = pages.orEmpty(),
         screens = screens?.map { it.toDomain() } ?: emptyList(),
-        remoteConfig = remoteConfig?.toDomain() ?: RemoteConfig()
+        remoteConfig = remoteConfig?.toDomain() ?: RemoteConfig(),
+        whyChooseUs = whyChooseUsDomain
     )
 }
 
@@ -543,9 +553,11 @@ fun MenuResponseDto.toHomeConfig(): HomeConfig {
                     "offers", "offer_list" -> SectionType.OFFERS
                     "gallery", "gallery_preview" -> SectionType.GALLERY
                     "locations", "salon_location_card" -> SectionType.LOCATIONS
-                    "about", "feature_grid", "why_choose_us" -> SectionType.ABOUT
+                    "feature_grid", "why_choose_us" -> SectionType.ABOUT
+                    "about" -> SectionType.ABOUT
                     "contact" -> SectionType.CONTACT
-                    "banner", "franchise_banner" -> SectionType.BANNER
+                    "franchise_banner" -> SectionType.BANNER
+                    "banner" -> SectionType.BANNER
                     "reviews", "review_list" -> SectionType.REVIEWS
                     "spacer" -> SectionType.SPACER
                     else -> SectionType.UNKNOWN
@@ -583,7 +595,14 @@ fun MenuResponseDto.toHomeConfig(): HomeConfig {
                     enabled = s.enabled ?: true,
                     order = s.order ?: 0,
                     banners = resolvedBanners,
-                    autoSlideIntervalMs = s.autoSlideIntervalMs ?: 4000L
+                    autoSlideIntervalMs = s.autoSlideIntervalMs ?: 4000L,
+                    dataSource = s.dataSource,
+                    showViewAll = s.showViewAll ?: true,
+                    viewAllDestination = s.viewAllDestination,
+                    hideWhenEmpty = s.hideWhenEmpty ?: false,
+                    hideWhenDisabled = s.hideWhenDisabled ?: false,
+                    showAddress = s.showAddress ?: false,
+                    showOpeningHours = s.showOpeningHours ?: false
                 )
             }
         return HomeConfig(salon = salonInfo, sections = mappedSections)
@@ -804,6 +823,25 @@ fun MenuResponseDto.toServiceCategories(): List<ServiceCategory> {
         }
     }
 
+    homeServices?.forEach { s ->
+        if (allServices.none { it.name.equals(s.name, ignoreCase = true) }) {
+            allServices.add(
+                SalonService(
+                    id = s.id?.toString() ?: s.name.orEmpty().lowercase().replace(" ", "_"),
+                    name = s.name.orEmpty(),
+                    description = s.description.orEmpty(),
+                    price = s.price ?: 0.0,
+                    currency = "INR",
+                    durationMinutes = 30,
+                    imageUrl = s.imageUrl.orEmpty(),
+                    featured = false,
+                    bookingEnabled = s.isAvailable ?: true,
+                    homeServiceAvailable = true
+                )
+            )
+        }
+    }
+
     priceList?.forEach { p ->
         if (allServices.none { it.name.equals(p.name, ignoreCase = true) }) {
             allServices.add(
@@ -841,6 +879,7 @@ fun MenuResponseDto.toServiceCategories(): List<ServiceCategory> {
         val matching = allServices.filter { service ->
             popularServices?.any { it.name.equals(service.name, ignoreCase = true) && it.category.equals(catKey, ignoreCase = true) } == true ||
             quickServices?.any { it.name.equals(service.name, ignoreCase = true) && it.category.equals(catKey, ignoreCase = true) } == true ||
+            homeServices?.any { it.name.equals(service.name, ignoreCase = true) && it.category.equals(catKey, ignoreCase = true) } == true ||
             priceList?.any { it.name.equals(service.name, ignoreCase = true) && it.category.equals(catKey, ignoreCase = true) } == true
         }
 
@@ -885,20 +924,32 @@ fun MenuResponseDto.toServiceCategories(): List<ServiceCategory> {
 
 fun MenuResponseDto.toOffers(): List<Offer> {
     return offers?.map {
+        val effectiveValidTill = it.validUntil?.ifBlank { null } ?: it.validTill.orEmpty()
+        val computedDiscount = it.discount?.ifBlank { null }
+            ?: it.badge?.ifBlank { null }
+            ?: run {
+                val orig = it.originalPrice?.toString()?.toIntOrNull()
+                val pr = it.price?.toString()?.toIntOrNull()
+                if (orig != null && pr != null && orig > pr) {
+                    val saved = orig - pr
+                    "₹$saved OFF"
+                } else null
+            }.orEmpty()
+
         Offer(
             id = it.id?.toString().orEmpty(),
             title = it.title.orEmpty(),
-            subtitle = it.subtitle.orEmpty(),
+            subtitle = it.subtitle?.ifBlank { null } ?: it.badge.orEmpty(),
             description = it.description.orEmpty(),
             imageUrl = it.imageUrl.orEmpty(),
-            discount = it.discount.orEmpty(),
+            discount = computedDiscount,
             discountType = when (it.discountType?.lowercase()) {
                 "percentage" -> DiscountType.PERCENTAGE
                 "fixed" -> DiscountType.FIXED
                 else -> DiscountType.CUSTOM
             },
             validFrom = it.validFrom.orEmpty(),
-            validTill = it.validTill.orEmpty(),
+            validTill = effectiveValidTill,
             terms = it.terms.orEmpty(),
             ctaText = it.ctaText.orEmpty().ifBlank { "Book Offer" },
             ctaAction = it.ctaAction.orEmpty().ifBlank { "booking" },
@@ -909,9 +960,10 @@ fun MenuResponseDto.toOffers(): List<Offer> {
 
 fun ReviewDto.toDomain(): Review {
     val reviewBody = comment?.ifBlank { null } ?: reviewText.orEmpty()
+    val authorName = author?.ifBlank { null } ?: customerName?.ifBlank { null } ?: "Verified Client"
     return Review(
         id = id?.toString().orEmpty(),
-        author = author.orEmpty().ifBlank { "Verified Client" },
+        author = authorName,
         rating = rating ?: 5.0,
         comment = reviewBody,
         date = date.orEmpty(),
@@ -927,14 +979,15 @@ fun MenuResponseDto.toReviews(): List<Review> {
 
 fun MenuResponseDto.toGalleryImages(): List<GalleryImage> {
     return galleryItems?.mapIndexed { index, item ->
+        val category = item.category?.ifBlank { "all" } ?: "all"
         GalleryImage(
             id = item.id?.toString() ?: "gallery_$index",
-            categoryId = "all",
+            categoryId = category,
             title = item.title.orEmpty(),
-            description = "",
+            description = item.description.orEmpty(),
             thumbnailUrl = item.imageUrl.orEmpty(),
             imageUrl = item.imageUrl.orEmpty(),
-            enabled = true,
+            enabled = item.isAvailable ?: true,
             featured = index < 2,
             order = index
         )

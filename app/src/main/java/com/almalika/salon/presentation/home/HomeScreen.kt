@@ -98,6 +98,28 @@ fun DynamicSectionRenderer(
     branches: List<Branch>,
     onAction: (AppAction) -> Unit
 ) {
+    fun resolveDestinationAction(dest: String?): AppAction {
+        return when (dest?.lowercase()?.trim()) {
+            "services" -> AppAction.Services
+            "offers" -> AppAction.Offers
+            "reviews" -> AppAction.Reviews
+            "gallery" -> AppAction.Gallery
+            "locations", "location" -> AppAction.Locations
+            "booking" -> AppAction.Booking
+            "home_service", "homeservice" -> AppAction.HomeService
+            "franchise" -> AppAction.Franchise
+            "about" -> AppAction.About
+            "contact" -> AppAction.Contact
+            "settings" -> AppAction.Settings
+            "profile" -> AppAction.Profile
+            "login" -> AppAction.Login
+            "register" -> AppAction.Register
+            "terms" -> AppAction.Terms
+            "privacy" -> AppAction.Privacy
+            else -> AppAction.Services
+        }
+    }
+
     when (section.type) {
         SectionType.HERO -> {
             val isHomeBannersEnabled = master.featureFlags["homeBanners"] ?: true
@@ -107,84 +129,274 @@ fun DynamicSectionRenderer(
         }
 
         SectionType.QUICK_ACTIONS -> {
-            val isHomeServiceEnabled = master.featureFlags["homeService"] ?: false
-            QuickActionsSection(onAction = onAction, showHomeService = isHomeServiceEnabled)
-        }
+            val isQuickServicesEnabled = master.featureFlags["quickServices"] ?: true
+            if (isQuickServicesEnabled) {
+                val flatServices = services.flatMap { it.services }
+                val targetCount = section.itemsToShow.coerceAtLeast(1)
+                val visibleQuickServices = flatServices.take(targetCount)
+                if (visibleQuickServices.isNotEmpty() || !section.hideWhenEmpty) {
+                    val viewAllAction = if (section.showViewAll) {
+                        { onAction(resolveDestinationAction(section.viewAllDestination ?: "services")) }
+                    } else null
 
-        SectionType.OFFERS -> {
-            if (offers.isNotEmpty()) {
-                SectionHeader(
-                    title = section.title.ifBlank { "Exclusive Offers" },
-                    subtitle = section.subtitle.ifBlank { "Limited period deals" },
-                    actionText = "All Offers",
-                    onActionClick = { onAction(AppAction.Offers) }
-                )
-                LazyRow(
-                    contentPadding = PaddingValues(horizontal = 16.dp),
-                    horizontalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                    items(offers.take(section.itemsToShow)) { offer ->
-                        HomeOfferCard(offer = offer, onClick = { onAction(AppAction.SelectOffer(offer.id)) })
-                    }
+                    SectionHeader(
+                        title = section.title.ifBlank { "Quick Services" },
+                        subtitle = section.subtitle.ifBlank { null },
+                        actionText = if (section.showViewAll) "View All" else null,
+                        onActionClick = viewAllAction
+                    )
+                    HomeServiceGrid(
+                        services = visibleQuickServices,
+                        onServiceClick = { onAction(AppAction.SelectService(it.id)) }
+                    )
                 }
             }
         }
 
         SectionType.SERVICES -> {
-            val flatServices = services.flatMap { it.services }
-            if (flatServices.isNotEmpty()) {
-                SectionHeader(
-                    title = section.title.ifBlank { "Popular Services" },
-                    subtitle = section.subtitle.ifBlank { "Styling, care & aesthetics" },
-                    actionText = "All Services",
-                    onActionClick = { onAction(AppAction.Services) }
-                )
-                LazyRow(
-                    contentPadding = PaddingValues(horizontal = 16.dp),
-                    horizontalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                    items(flatServices.take(section.itemsToShow)) { service ->
-                        HomeServiceCard(service = service, onClick = { onAction(AppAction.SelectService(service.id)) })
+            val isPopularServicesEnabled = master.featureFlags["popularServices"] ?: true
+            if (isPopularServicesEnabled) {
+                val flatServices = services.flatMap { it.services }
+                val targetCount = section.itemsToShow.coerceAtLeast(1)
+                val visibleServices = flatServices.take(targetCount)
+                if (visibleServices.isNotEmpty() || !section.hideWhenEmpty) {
+                    val viewAllAction = if (section.showViewAll) {
+                        { onAction(resolveDestinationAction(section.viewAllDestination ?: "services")) }
+                    } else null
+
+                    SectionHeader(
+                        title = section.title.ifBlank { "Popular Services" },
+                        subtitle = section.subtitle.ifBlank { "Styling, care & aesthetics" },
+                        actionText = if (section.showViewAll) "All Services" else null,
+                        onActionClick = viewAllAction
+                    )
+                    LazyRow(
+                        contentPadding = PaddingValues(horizontal = 16.dp),
+                        horizontalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        items(visibleServices, key = { it.id }) { service ->
+                            HomeServiceCard(service = service, onClick = { onAction(AppAction.SelectService(service.id)) })
+                        }
                     }
                 }
             }
         }
 
-        SectionType.GALLERY -> {
-            if (galleryImages.isNotEmpty()) {
+        SectionType.FEATURE_GRID -> {
+            val whyChooseUsItems = master.whyChooseUs
+            if (whyChooseUsItems.isNotEmpty() || !section.hideWhenEmpty) {
                 SectionHeader(
-                    title = section.title.ifBlank { "Transformations" },
-                    subtitle = section.subtitle.ifBlank { "Client styling highlights" },
-                    actionText = "View Gallery",
-                    onActionClick = { onAction(AppAction.Gallery) }
+                    title = section.title.ifBlank { "Why Choose Us" },
+                    subtitle = section.subtitle.ifBlank { null },
+                    actionText = null,
+                    onActionClick = null
                 )
-                LazyRow(
-                    contentPadding = PaddingValues(horizontal = 16.dp),
-                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                HomeFeatureGrid(items = whyChooseUsItems)
+            }
+        }
+
+        SectionType.GALLERY -> {
+            val isGalleryEnabled = master.featureFlags["gallery"] ?: true
+            if (isGalleryEnabled) {
+                val targetCount = section.itemsToShow.coerceAtLeast(1)
+                val visibleGallery = galleryImages.take(targetCount)
+                if (visibleGallery.isNotEmpty() || !section.hideWhenEmpty) {
+                    val viewAllAction = if (section.showViewAll) {
+                        { onAction(resolveDestinationAction(section.viewAllDestination ?: "gallery")) }
+                    } else null
+
+                    SectionHeader(
+                        title = section.title.ifBlank { "Our Gallery" },
+                        subtitle = section.subtitle.ifBlank { "Client styling highlights" },
+                        actionText = if (section.showViewAll) "View Gallery" else null,
+                        onActionClick = viewAllAction
+                    )
+                    LazyRow(
+                        contentPadding = PaddingValues(horizontal = 16.dp),
+                        horizontalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        items(visibleGallery, key = { it.id }) { img ->
+                            HomeGalleryCard(image = img, onClick = { onAction(AppAction.OpenGalleryImage(img.id)) })
+                        }
+                    }
+                }
+            }
+        }
+
+        SectionType.OFFERS -> {
+            val isOffersEnabled = master.featureFlags["offers"] ?: true
+            if (isOffersEnabled) {
+                val targetCount = section.itemsToShow.coerceAtLeast(1)
+                val visibleOffers = offers.take(targetCount)
+                if (visibleOffers.isNotEmpty() || !section.hideWhenEmpty) {
+                    val viewAllAction = if (section.showViewAll) {
+                        { onAction(resolveDestinationAction(section.viewAllDestination ?: "offers")) }
+                    } else null
+
+                    SectionHeader(
+                        title = section.title.ifBlank { "Special Offers" },
+                        subtitle = section.subtitle.ifBlank { "Limited period deals" },
+                        actionText = if (section.showViewAll) "All Offers" else null,
+                        onActionClick = viewAllAction
+                    )
+                    LazyRow(
+                        contentPadding = PaddingValues(horizontal = 16.dp),
+                        horizontalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        items(visibleOffers, key = { it.id }) { offer ->
+                            HomeOfferCard(offer = offer, onClick = { onAction(AppAction.SelectOffer(offer.id)) })
+                        }
+                    }
+                }
+            }
+        }
+
+        SectionType.REVIEWS -> {
+            val isReviewsEnabled = master.featureFlags["reviews"] ?: true
+            if (isReviewsEnabled) {
+                val viewAllAction = if (section.showViewAll) {
+                    { onAction(resolveDestinationAction(section.viewAllDestination ?: "reviews")) }
+                } else null
+
+                SectionHeader(
+                    title = section.title.ifBlank { "Customer Reviews" },
+                    subtitle = section.subtitle.ifBlank { "Real client styling experiences" },
+                    actionText = if (section.showViewAll) "All Reviews" else null,
+                    onActionClick = viewAllAction
+                )
+                Card(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp, vertical = 6.dp)
+                        .clickable { onAction(resolveDestinationAction(section.actionRoute.ifBlank { "reviews" })) },
+                    shape = RoundedCornerShape(16.dp),
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
                 ) {
-                    items(galleryImages.take(section.itemsToShow)) { img ->
-                        HomeGalleryCard(image = img, onClick = { onAction(AppAction.OpenGalleryImage(img.id)) })
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(16.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Star,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier.size(32.dp)
+                        )
+                        Spacer(modifier = Modifier.width(12.dp))
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(
+                                text = master.salon.name,
+                                style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold)
+                            )
+                            Text(
+                                text = "Royal Grooming & Client Satisfaction",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                        TextButton(onClick = { onAction(resolveDestinationAction(section.actionRoute.ifBlank { "reviews" })) }) {
+                            Text("View")
+                        }
                     }
                 }
             }
         }
 
         SectionType.LOCATIONS -> {
-            if (branches.isNotEmpty()) {
+            if (branches.isNotEmpty() || !section.hideWhenEmpty) {
                 SectionHeader(
-                    title = section.title.ifBlank { "Visit Our Branches" },
-                    subtitle = section.subtitle.ifBlank { "Convenient locations in town" },
-                    actionText = "All Locations",
-                    onActionClick = { onAction(AppAction.Locations) }
+                    title = section.title.ifBlank { "Visit Our Salon" },
+                    subtitle = section.subtitle.ifBlank { "Convenient grooming studio" },
+                    actionText = if (section.showViewAll) "All Locations" else null,
+                    onActionClick = if (section.showViewAll) {
+                        { onAction(resolveDestinationAction(section.viewAllDestination ?: "locations")) }
+                    } else null
                 )
-                branches.take(2).forEach { branch ->
-                    HomeBranchCard(branch = branch, onAction = onAction)
+                branches.take(section.itemsToShow.coerceAtLeast(1)).forEach { branch ->
+                    HomeBranchCard(
+                        branch = branch,
+                        showAddress = section.showAddress,
+                        showOpeningHours = section.showOpeningHours,
+                        onAction = onAction
+                    )
                 }
             }
         }
 
         SectionType.ABOUT -> {
-            AboutSectionView(master = master, onAction = onAction)
+            if (master.whyChooseUs.isNotEmpty()) {
+                SectionHeader(
+                    title = section.title.ifBlank { "Why Choose Us" },
+                    subtitle = section.subtitle.ifBlank { "Experience premier grooming excellence" }
+                )
+                HomeFeatureGrid(items = master.whyChooseUs)
+            } else {
+                AboutSectionView(master = master, onAction = onAction)
+            }
+        }
+
+        SectionType.BANNER, SectionType.FRANCHISE_BANNER -> {
+            if (section.id == "home_franchise" || section.dataSource == "franchise" || section.type == SectionType.FRANCHISE_BANNER) {
+                val isFranchiseEnabled = (master.featureFlags["franchise"] ?: true) && (master.franchise?.enabled ?: false)
+                if (isFranchiseEnabled || !section.hideWhenDisabled) {
+                    HomeFranchiseBannerCard(
+                        section = section,
+                        franchise = master.franchise,
+                        onAction = { onAction(resolveDestinationAction(section.actionRoute.ifBlank { "franchise" })) }
+                    )
+                }
+            } else {
+                Card(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp, vertical = 8.dp),
+                    shape = RoundedCornerShape(16.dp),
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.surfaceVariant
+                    )
+                ) {
+                    if (section.imageUrl.isNotBlank()) {
+                        AsyncImage(
+                            model = section.imageUrl,
+                            contentDescription = section.title,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(140.dp),
+                            contentScale = ContentScale.Crop
+                        )
+                    } else {
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(20.dp)
+                        ) {
+                            Text(
+                                text = section.title.ifBlank { "Special Announcement" },
+                                style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
+                                color = MaterialTheme.colorScheme.primary
+                            )
+                            if (section.subtitle.isNotBlank()) {
+                                Spacer(modifier = Modifier.height(6.dp))
+                                Text(
+                                    text = section.subtitle,
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
+                            if (section.actionRoute.isNotBlank()) {
+                                Spacer(modifier = Modifier.height(12.dp))
+                                FilledTonalButton(
+                                    onClick = { onAction(resolveDestinationAction(section.actionRoute)) }
+                                ) {
+                                    Text(section.actionText.ifBlank { "Learn More" })
+                                }
+                            }
+                        }
+                    }
+                }
+            }
         }
 
         SectionType.CONTACT -> {
@@ -216,121 +428,193 @@ fun DynamicSectionRenderer(
             }
         }
 
-        SectionType.BANNER -> {
-            Card(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp, vertical = 8.dp),
-                shape = RoundedCornerShape(16.dp),
-                colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.surfaceVariant
-                )
-            ) {
-                if (section.imageUrl.isNotBlank()) {
-                    AsyncImage(
-                        model = section.imageUrl,
-                        contentDescription = section.title,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(140.dp),
-                        contentScale = ContentScale.Crop
-                    )
-                } else {
-                    Column(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(20.dp)
-                    ) {
-                        Text(
-                            text = section.title.ifBlank { "Special Announcement" },
-                            style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
-                            color = MaterialTheme.colorScheme.primary
-                        )
-                        if (section.subtitle.isNotBlank()) {
-                            Spacer(modifier = Modifier.height(6.dp))
-                            Text(
-                                text = section.subtitle,
-                                style = MaterialTheme.typography.bodyMedium,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
-                        }
-                        if (section.actionRoute.isNotBlank()) {
-                            Spacer(modifier = Modifier.height(12.dp))
-                            FilledTonalButton(
-                                onClick = {
-                                    val action = when (section.actionRoute) {
-                                        "services" -> AppAction.Services
-                                        "offers" -> AppAction.Offers
-                                        "reviews" -> AppAction.Reviews
-                                        "gallery" -> AppAction.Gallery
-                                        "locations" -> AppAction.Locations
-                                        "booking" -> AppAction.Booking
-                                        "about" -> AppAction.About
-                                        "contact" -> AppAction.Contact
-                                        else -> AppAction.About
-                                    }
-                                    onAction(action)
-                                }
-                            ) {
-                                Text(section.actionText.ifBlank { "Learn More" })
-                            }
-                        }
-                    }
-                }
-            }
-        }
-
-        SectionType.REVIEWS -> {
-            SectionHeader(
-                title = section.title.ifBlank { "Client Reviews" },
-                subtitle = section.subtitle.ifBlank { "Real client styling experiences" },
-                actionText = "All Reviews",
-                onActionClick = { onAction(AppAction.Reviews) }
-            )
-            Card(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp, vertical = 6.dp)
-                    .clickable { onAction(AppAction.Reviews) },
-                shape = RoundedCornerShape(16.dp),
-                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
-            ) {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(16.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.Star,
-                        contentDescription = null,
-                        tint = MaterialTheme.colorScheme.primary,
-                        modifier = Modifier.size(32.dp)
-                    )
-                    Spacer(modifier = Modifier.width(12.dp))
-                    Column(modifier = Modifier.weight(1f)) {
-                        Text(
-                            text = master.salon.name,
-                            style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold)
-                        )
-                        Text(
-                            text = "Royal Grooming & Client Satisfaction",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    }
-                    TextButton(onClick = { onAction(AppAction.Reviews) }) {
-                        Text("View")
-                    }
-                }
-            }
-        }
-
         SectionType.SPACER -> {
             Spacer(modifier = Modifier.height(16.dp))
         }
 
         SectionType.UNKNOWN -> {}
+    }
+}
+
+@Composable
+fun HomeServiceGrid(
+    services: List<SalonService>,
+    onServiceClick: (SalonService) -> Unit
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp),
+        verticalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        val rows = services.chunked(2)
+        rows.forEach { rowServices ->
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                rowServices.forEach { service ->
+                    Box(modifier = Modifier.weight(1f)) {
+                        Card(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable { onServiceClick(service) },
+                            shape = RoundedCornerShape(14.dp),
+                            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
+                        ) {
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(10.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                if (service.imageUrl.isNotBlank()) {
+                                    AsyncImage(
+                                        model = service.imageUrl,
+                                        contentDescription = service.name,
+                                        modifier = Modifier
+                                            .size(48.dp)
+                                            .clip(RoundedCornerShape(10.dp)),
+                                        contentScale = ContentScale.Crop
+                                    )
+                                    Spacer(modifier = Modifier.width(10.dp))
+                                }
+                                Column(modifier = Modifier.weight(1f)) {
+                                    Text(
+                                        text = service.name,
+                                        style = MaterialTheme.typography.titleSmall,
+                                        maxLines = 1,
+                                        overflow = TextOverflow.Ellipsis
+                                    )
+                                    val formattedPrice = com.almalika.salon.core.currency.CurrencyFormatter.format(service.price)
+                                    Text(
+                                        text = formattedPrice,
+                                        style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.Bold),
+                                        color = MaterialTheme.colorScheme.primary
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
+                if (rowServices.size == 1) {
+                    Spacer(modifier = Modifier.weight(1f))
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun HomeFeatureGrid(
+    items: List<WhyChooseUsItem>
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp),
+        verticalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        val rows = items.chunked(2)
+        rows.forEach { rowItems ->
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                rowItems.forEach { item ->
+                    Card(
+                        modifier = Modifier
+                            .weight(1f),
+                        shape = RoundedCornerShape(14.dp),
+                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.4f))
+                    ) {
+                        Column(modifier = Modifier.padding(12.dp)) {
+                            val iconVector = com.almalika.salon.presentation.navigation.IconResolver.resolve(item.icon)
+                            Icon(
+                                imageVector = iconVector,
+                                contentDescription = item.title,
+                                tint = MaterialTheme.colorScheme.primary,
+                                modifier = Modifier.size(24.dp)
+                            )
+                            Spacer(modifier = Modifier.height(6.dp))
+                            Text(
+                                text = item.title,
+                                style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.Bold),
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis
+                            )
+                            if (item.description.isNotBlank()) {
+                                Spacer(modifier = Modifier.height(2.dp))
+                                Text(
+                                    text = item.description,
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    maxLines = 2,
+                                    overflow = TextOverflow.Ellipsis
+                                )
+                            }
+                        }
+                    }
+                }
+                if (rowItems.size == 1) {
+                    Spacer(modifier = Modifier.weight(1f))
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun HomeFranchiseBannerCard(
+    section: HomeSection,
+    franchise: FranchiseConfig?,
+    onAction: () -> Unit
+) {
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 8.dp)
+            .clickable(onClick = onAction),
+        shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.6f))
+    ) {
+        Column {
+            val bannerImg = section.imageUrl.ifBlank { franchise?.bannerImage.orEmpty() }
+            if (bannerImg.isNotBlank()) {
+                AsyncImage(
+                    model = bannerImg,
+                    contentDescription = section.title,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(130.dp),
+                    contentScale = ContentScale.Crop
+                )
+            }
+            Column(modifier = Modifier.padding(16.dp)) {
+                Text(
+                    text = section.title.ifBlank { franchise?.title.orEmpty().ifBlank { "Franchise Opportunities" } },
+                    style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold)
+                )
+                val subtitleText = section.subtitle.ifBlank { franchise?.subtitle.orEmpty().ifBlank { franchise?.description.orEmpty() } }
+                if (subtitleText.isNotBlank()) {
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Text(
+                        text = subtitleText,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        maxLines = 2,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                }
+                Spacer(modifier = Modifier.height(10.dp))
+                FilledTonalButton(
+                    onClick = onAction,
+                    shape = RoundedCornerShape(12.dp)
+                ) {
+                    Text(section.actionText.ifBlank { "Explore Franchise" })
+                }
+            }
+        }
     }
 }
 
@@ -438,7 +722,12 @@ fun HomeGalleryCard(image: GalleryImage, onClick: () -> Unit) {
 }
 
 @Composable
-fun HomeBranchCard(branch: Branch, onAction: (AppAction) -> Unit) {
+fun HomeBranchCard(
+    branch: Branch,
+    showAddress: Boolean = true,
+    showOpeningHours: Boolean = true,
+    onAction: (AppAction) -> Unit
+) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
@@ -448,10 +737,14 @@ fun HomeBranchCard(branch: Branch, onAction: (AppAction) -> Unit) {
     ) {
         Column(modifier = Modifier.padding(14.dp)) {
             Text(text = branch.name, style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.Bold))
-            Text(text = branch.address, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-            Spacer(modifier = Modifier.height(6.dp))
-            Text(text = "Timings: ${branch.timings.ifBlank { "9:00 AM - 9:00 PM" }}", style = MaterialTheme.typography.labelSmall)
-            Spacer(modifier = Modifier.height(10.dp))
+            if (showAddress && branch.address.isNotBlank()) {
+                Text(text = branch.address, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Spacer(modifier = Modifier.height(6.dp))
+            }
+            if (showOpeningHours) {
+                Text(text = "Timings: ${branch.timings.ifBlank { "9:00 AM - 9:00 PM" }}", style = MaterialTheme.typography.labelSmall)
+                Spacer(modifier = Modifier.height(10.dp))
+            }
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 OutlinedButton(
                     onClick = { onAction(AppAction.OpenMap(branch.googleMapsUrl, branch.latitude, branch.longitude)) },
